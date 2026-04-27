@@ -1,0 +1,113 @@
+import time
+import pandas as pd
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+
+# Set up Chrome driver with options
+chrome_options = webdriver.ChromeOptions()
+chrome_options.add_argument("--disable-extensions")
+chrome_options.add_argument("--disable-notifications")
+chrome_options.add_argument("--no-sandbox")
+chrome_options.add_argument("--disable-dev-shm-usage")
+chrome_options.add_argument("--disable-webrtc")  # To suppress stun.l.google.com errors
+
+# Initialize WebDriver with Service and options
+service = Service(ChromeDriverManager().install())
+driver = webdriver.Chrome(service=service, options=chrome_options)
+
+# LinkedIn credentials (replace with your own)
+USERNAME = "jagjotsingh2287@gmail.com"
+PASSWORD = "Mission12#100"
+SEARCH_QUERY = "https://www.linkedin.com/search/results/people/?keywords=HR%20manager&location=India"
+
+# Function to log in to LinkedIn
+def login():
+    driver.get("https://www.linkedin.com/login")
+    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "username")))
+    driver.find_element(By.ID, "username").send_keys(USERNAME)
+    driver.find_element(By.ID, "password").send_keys(PASSWORD)
+    driver.find_element(By.XPATH, "//button[@type='submit']").click()
+    time.sleep(5)  # Wait for login to complete
+
+# Function to scroll and load all profiles
+def scroll_to_load_profiles():
+    last_height = driver.execute_script("return document.body.scrollHeight")
+    while True:
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        time.sleep(3)  # Increased wait to ensure content loads
+        new_height = driver.execute_script("return document.body.scrollHeight")
+        if new_height == last_height:
+            break
+        last_height = new_height
+    print(f"Finished scrolling. Page height stabilized at {new_height}px.")
+
+# Function to scrape profile data
+def scrape_search_results():
+    data = []
+    try:
+        # Wait for profiles to load (using data-viewname attribute)
+        WebDriverWait(driver, 30).until(
+            EC.presence_of_all_elements_located((By.CSS_SELECTOR, "div[data-viewname='search-entity-result-universal-template']"))
+        )
+        
+        # Find profile containers
+        profile_containers = driver.find_elements(By.CSS_SELECTOR, "div[data-viewname='search-entity-result-universal-template']")
+        print(f"Found {len(profile_containers)} profile containers.")
+        
+        for container in profile_containers:
+            try:
+                # Extract name (using span with class containing t-16)
+                name_elem = container.find_element(By.CSS_SELECTOR, "span[class*='t-16']")
+                name = name_elem.text.strip() if name_elem else "N/A"
+                
+                # Extract title (using div with t-14 t-black t-normal)
+                title_elem = container.find_element(By.CSS_SELECTOR, "div.t-14.t-black.t-normal")
+                title = title_elem.text.strip() if title_elem else "N/A"
+                
+                # Extract location (using div with t-14 t-normal)
+                location_elem = container.find_element(By.CSS_SELECTOR, "div.t-14.t-normal")
+                location = location_elem.text.strip() if location_elem else "N/A"
+                
+                data.append({"Name": name, "Title": title, "Location": location})
+                print(f"Scraped: Name={name}, Title={title}, Location={location}")
+            except NoSuchElementException:
+                print("Skipping profile due to missing elements.")
+                continue
+    except TimeoutException as e:
+        print(f"Timeout waiting for profiles: {e}. Check the selector or page content.")
+    
+    return data
+
+# Main execution
+try:
+    # Log in
+    login()
+    
+    # Navigate to search page
+    driver.get(SEARCH_QUERY)
+    time.sleep(3)
+    
+    # Manual intervention for CAPTCHAs
+    input("Press Enter after solving any CAPTCHAs or confirming the page has loaded.")
+    
+    # Scroll to load profiles
+    scroll_to_load_profiles()
+    
+    # Scrape data
+    profile_data = scrape_search_results()
+    
+    # Save to Excel
+    if profile_data:
+        df = pd.DataFrame(profile_data)
+        df.to_excel("linkedin_profiles.xlsx", index=False)
+        print(f"Scraped {len(profile_data)} profiles. Data saved to linkedin_profiles.xlsx")
+    else:
+        print("No profiles scraped.")
+
+finally:
+    driver.quit()
