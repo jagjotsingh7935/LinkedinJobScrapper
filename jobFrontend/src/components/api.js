@@ -1,7 +1,9 @@
 import axios from "axios";
 
-const rawApiUrl = import.meta.env.VITE_API_URL || "/";
-const API_BASE_URL = rawApiUrl.endsWith("/") ? rawApiUrl : `${rawApiUrl}/`;
+const API_BASE_URL = import.meta.env.DEV
+  ? (import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/").replace(/\/?$/, "/")
+  : "/";
+
 
 
 export const searchJobs = async (keywords, location,email, jobLimit) => {
