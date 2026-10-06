@@ -14,7 +14,6 @@ import {
   Container,
   Paper,
   Divider,
-  IconButton,
   Stack,
   Avatar,
   CardActions,
@@ -29,6 +28,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  IconButton,
+  InputAdornment,
 } from "@mui/material";
 import {
   Search as SearchIcon,
@@ -36,7 +37,10 @@ import {
   Business as BusinessIcon,
   Work as WorkIcon,
   Launch as LaunchIcon,
-  Star as StarIcon,
+  FileDownload as DownloadIcon,
+  History as HistoryIcon,
+  Close as CloseIcon,
+  DateRange as DateIcon,
 } from "@mui/icons-material";
 import { savedJobSearch, downloadExcel, getAllJobs } from "./api";
 import debounce from "lodash/debounce";
@@ -46,11 +50,12 @@ function SavedJobSearch() {
   const [location, setLocation] = useState("");
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState(null);
   const [message, setMessage] = useState("");
   const [page, setPage] = useState(1);
   const [count, setCount] = useState(0);
-  const [pageSize, setPageSize] = useState(5);
+  const [pageSize, setPageSize] = useState(6);
   const [numPages, setNumPages] = useState(1);
   const [tabValue, setTabValue] = useState(0);
   const [openDialog, setOpenDialog] = useState(false);
@@ -68,17 +73,14 @@ function SavedJobSearch() {
       setCount(data.count || 0);
       setNumPages(data.num_pages || 1);
       setMessage(
-        data.count > 0
-          ? `${data.count} saved jobs found`
-          : "No saved jobs found"
+        data.count > 0 ? `${data.count} scraped jobs found in search archive` : ""
       );
     } catch (err) {
-      setError("Failed to fetch saved jobs. Please try again.");
-      console.error("Error:", err);
+      setError("Failed to fetch search history. Please try again.");
     } finally {
       setLoading(false);
     }
-  }, 1000);
+  }, 400);
 
   const debouncedHistory = debounce(async (pg, size) => {
     setLoading(true);
@@ -88,20 +90,19 @@ function SavedJobSearch() {
       setJobs(data.results || []);
       setCount(data.count || 0);
       setNumPages(data.num_pages || 1);
-      setMessage(data.count > 0 ? `${data.count} jobs found` : "No jobs found");
+      setMessage(data.count > 0 ? `${data.count} all-time scraped records in database` : "");
     } catch (err) {
-      setError("Failed to fetch job history. Please try again.");
-      console.error("Error:", err);
+      setError("Failed to fetch complete job history. Please try again.");
     } finally {
       setLoading(false);
     }
-  }, 1000);
+  }, 400);
 
   useEffect(() => {
-    setPage(1); // Reset page to 1 when filters or pageSize change
-    if (tabValue === 0 && keywords && location) {
+    setPage(1);
+    if (tabValue === 0) {
       debouncedSearch(keywords, location, 1, pageSize);
-    } else if (tabValue === 1) {
+    } else {
       debouncedHistory(1, pageSize);
     }
     return () => {
@@ -111,9 +112,9 @@ function SavedJobSearch() {
   }, [keywords, location, pageSize, tabValue]);
 
   useEffect(() => {
-    if (tabValue === 0 && keywords && location) {
+    if (tabValue === 0) {
       debouncedSearch(keywords, location, page, pageSize);
-    } else if (tabValue === 1) {
+    } else {
       debouncedHistory(page, pageSize);
     }
     return () => {
@@ -124,727 +125,559 @@ function SavedJobSearch() {
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
-    setJobs([]);
-    setMessage("");
-    setError(null);
     setPage(1);
-    // Reset numPages to 1 for Search Jobs tab to hide pagination
-    if (newValue === 0) {
-      setNumPages(1);
-    }
   };
 
   const handlePageChange = (event, value) => {
     setPage(value);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handlePageSizeChange = (event) => {
     setPageSize(event.target.value);
-    setPage(1);
   };
 
   const handleDownload = async () => {
+    setDownloading(true);
     try {
       await downloadExcel(jobs);
     } catch (err) {
       setError("Failed to download Excel file.");
-      console.error("Error:", err);
+    } finally {
+      setDownloading(false);
     }
   };
 
   const JobSkeleton = () => (
-    <Card sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
-      <CardContent sx={{ flexGrow: 1 }}>
+    <Card
+      elevation={0}
+      sx={{
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        borderRadius: 3.5,
+        border: "1px solid #e2e8f0",
+        p: 2.5,
+      }}
+    >
+      <Stack spacing={2} sx={{ flexGrow: 1 }}>
+        <Skeleton variant="rectangular" width="70%" height={24} sx={{ borderRadius: 1.5 }} />
+        <Stack direction="row" spacing={1} alignItems="center">
+          <Skeleton variant="circular" width={20} height={20} />
+          <Skeleton variant="text" width="50%" />
+        </Stack>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <Skeleton variant="circular" width={20} height={20} />
+          <Skeleton variant="text" width="40%" />
+        </Stack>
+        <Skeleton variant="rectangular" width="100%" height={50} sx={{ borderRadius: 1.5 }} />
+        <Stack direction="row" spacing={1}>
+          <Skeleton variant="rounded" width={60} height={24} sx={{ borderRadius: 5 }} />
+          <Skeleton variant="rounded" width={75} height={24} sx={{ borderRadius: 5 }} />
+        </Stack>
+      </Stack>
+      <Divider sx={{ my: 2 }} />
+      <Skeleton variant="rectangular" width="100%" height={38} sx={{ borderRadius: 2 }} />
+    </Card>
+  );
+
+  const JobCard = ({ job }) => (
+    <Card
+      elevation={0}
+      sx={{
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        borderRadius: 3.5,
+        border: "1px solid #e2e8f0",
+        backgroundColor: "#ffffff",
+        transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+        "&:hover": {
+          transform: "translateY(-4px)",
+          borderColor: "#cbd5e1",
+          boxShadow: "0 14px 28px -6px rgba(15, 23, 42, 0.08)",
+        },
+      }}
+    >
+      <CardContent sx={{ flexGrow: 1, p: { xs: 2.5, sm: 3 } }}>
         <Stack spacing={2}>
-          <Skeleton variant="text" sx={{ fontSize: "1.5rem" }} />
-          <Stack direction="row" spacing={1} alignItems="center">
-            <Skeleton variant="circular" width={20} height={20} />
-            <Skeleton variant="text" width="60%" />
+          <Typography
+            variant="h6"
+            component="h3"
+            sx={{
+              fontWeight: 700,
+              color: "#0f172a",
+              fontSize: { xs: "1.05rem", sm: "1.15rem" },
+              lineHeight: 1.35,
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+            }}
+          >
+            {job.job_title}
+          </Typography>
+
+          <Stack spacing={1}>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Avatar sx={{ width: 24, height: 24, bgcolor: "#eff6ff", color: "#2563eb", fontSize: "0.75rem", fontWeight: 700 }}>
+                {job.company ? job.company.charAt(0).toUpperCase() : "C"}
+              </Avatar>
+              <Typography variant="body2" sx={{ fontWeight: 600, color: "#334155" }}>
+                {job.company || "Confidential"}
+              </Typography>
+            </Stack>
+
+            <Stack direction="row" spacing={1} alignItems="center">
+              <LocationIcon sx={{ color: "#64748b", fontSize: 18 }} />
+              <Typography variant="body2" sx={{ color: "#64748b", fontSize: "0.85rem" }}>
+                {job.location || "Remote / Unspecified"}
+              </Typography>
+            </Stack>
           </Stack>
-          <Stack direction="row" spacing={1} alignItems="center">
-            <Skeleton variant="circular" width={20} height={20} />
-            <Skeleton variant="text" width="40%" />
-          </Stack>
-          <Skeleton variant="text" sx={{ fontSize: "0.875rem" }} />
-          <Skeleton variant="text" sx={{ fontSize: "0.875rem" }} />
-          <Stack direction="row" spacing={1}>
-            <Skeleton
-              variant="rectangular"
-              width={60}
-              height={24}
-              sx={{ borderRadius: 12 }}
-            />
-            <Skeleton
-              variant="rectangular"
-              width={80}
-              height={24}
-              sx={{ borderRadius: 12 }}
-            />
-            <Skeleton
-              variant="rectangular"
-              width={70}
-              height={24}
-              sx={{ borderRadius: 12 }}
-            />
-          </Stack>
+
+          <Box sx={{ backgroundColor: "#f8fafc", p: 1.5, borderRadius: 2, border: "1px solid #f1f5f9" }}>
+            <Typography
+              variant="body2"
+              sx={{
+                color: "#475569",
+                display: "-webkit-box",
+                WebkitLineClamp: 3,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+                lineHeight: 1.5,
+                fontSize: "0.85rem",
+              }}
+            >
+              {job.job_description || "No description provided."}
+            </Typography>
+            {job.job_description && job.job_description.length > 150 && (
+              <Button
+                variant="text"
+                size="small"
+                onClick={() => {
+                  setSelectedDescription(job.job_description);
+                  setSelectedJobTitle(job.job_title);
+                  setOpenDescriptionDialog(true);
+                }}
+                sx={{
+                  textTransform: "none",
+                  fontWeight: 600,
+                  color: "#2563eb",
+                  p: 0,
+                  mt: 0.5,
+                  minWidth: "auto",
+                  fontSize: "0.8rem",
+                  "&:hover": { backgroundColor: "transparent", textDecoration: "underline" },
+                }}
+              >
+                Read More
+              </Button>
+            )}
+          </Box>
+
+          {job.skills && job.skills.length > 0 && (
+            <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap", gap: 0.75 }}>
+              {job.skills.slice(0, 3).map((skill, index) => (
+                <Chip
+                  key={index}
+                  label={skill}
+                  size="small"
+                  sx={{
+                    backgroundColor: "#eff6ff",
+                    color: "#1d4ed8",
+                    fontWeight: 600,
+                    fontSize: "0.75rem",
+                    height: 26,
+                    borderRadius: "14px",
+                    border: "1px solid #dbeafe",
+                  }}
+                />
+              ))}
+              {job.skills.length > 3 && (
+                <Chip
+                  label={`+${job.skills.length - 3} more`}
+                  size="small"
+                  clickable
+                  onClick={() => {
+                    setSelectedSkills(job.skills);
+                    setOpenDialog(true);
+                  }}
+                  sx={{
+                    backgroundColor: "#f1f5f9",
+                    color: "#475569",
+                    fontWeight: 600,
+                    fontSize: "0.75rem",
+                    height: 26,
+                    borderRadius: "14px",
+                    border: "1px solid #e2e8f0",
+                    "&:hover": { backgroundColor: "#e2e8f0" },
+                  }}
+                />
+              )}
+            </Stack>
+          )}
         </Stack>
       </CardContent>
-      <CardActions>
-        <Skeleton
-          variant="rectangular"
-          width={100}
-          height={36}
-          sx={{ borderRadius: 1 }}
-        />
+
+      <Divider sx={{ borderColor: "#f1f5f9" }} />
+
+      <CardActions sx={{ p: 2, pt: 1.5 }}>
+        {job.job_url ? (
+          <Button
+            href={job.job_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            variant="contained"
+            fullWidth
+            endIcon={<LaunchIcon sx={{ fontSize: 16 }} />}
+            sx={{
+              textTransform: "none",
+              borderRadius: 2,
+              fontWeight: 600,
+              backgroundColor: "#2563eb",
+              py: 0.9,
+              "&:hover": { backgroundColor: "#1d4ed8" },
+            }}
+          >
+            Open on LinkedIn
+          </Button>
+        ) : (
+          <Button
+            variant="outlined"
+            fullWidth
+            disabled
+            sx={{
+              textTransform: "none",
+              borderRadius: 2,
+              fontWeight: 600,
+              py: 0.9,
+            }}
+          >
+            Archive Record
+          </Button>
+        )}
       </CardActions>
     </Card>
   );
 
-  const JobCard = ({ job }) => {
-    let skills = job.skills;
-    if (typeof skills === "string") {
-      try {
-        skills = JSON.parse(skills);
-      } catch (e) {
-        skills = []; // Fallback to empty array if parsing fails
-      }
-    }
-    skills = Array.isArray(skills) ? skills : [];
-
-    return (
-      <Card
-        sx={{
-          height: "100%",
-          display: "flex",
-          flexDirection: "column",
-          transition: "all 0.3s ease",
-          "&:hover": {
-            transform: "translateY(-4px)",
-            boxShadow: (theme) => theme.shadows[8],
-          },
-        }}
-        elevation={2}
-      >
-        <CardContent sx={{ flexGrow: 1, p: 3 }}>
-          <Stack spacing={2}>
-            <Typography
-              variant="h6"
-              component="h3"
-              sx={{
-                fontWeight: 600,
-                color: "#374356",
-                lineHeight: 1.3,
-                display: "-webkit-box",
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: "vertical",
-                overflow: "hidden",
-              }}
-            >
-              {job.job_title}
-            </Typography>
-            <Stack direction="row" spacing={1} alignItems="center">
-              <BusinessIcon sx={{ color: "text.secondary", fontSize: 20 }} />
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{ fontWeight: 500 }}
-              >
-                {job.company}
-              </Typography>
-            </Stack>
-            <Stack direction="row" spacing={1} alignItems="center">
-              <LocationIcon sx={{ color: "text.secondary", fontSize: 20 }} />
-              <Typography variant="body2" color="text.secondary">
-                {job.location}
-              </Typography>
-            </Stack>
-            <Box>
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{
-                  display: "-webkit-box",
-                  WebkitLineClamp: 3,
-                  WebkitBoxOrient: "vertical",
-                  overflow: "hidden",
-                  lineHeight: 1.5,
-                }}
-              >
-                {job.job_description || "No description available"}
-              </Typography>
-              {job.job_description && job.job_description.length > 150 && (
-                <Button
-                  variant="text"
-                  size="small"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedDescription(job.job_description);
-                    setSelectedJobTitle(job.job_title);
-                    setOpenDescriptionDialog(true);
-                  }}
-                  sx={{
-                    textTransform: "none",
-                    fontWeight: 500,
-                    color: "primary.main",
-                    p: 0,
-                    minWidth: "auto",
-                    mt: 0.5,
-                    "&:hover": {
-                      backgroundColor: "transparent",
-                      textDecoration: "underline",
-                    },
-                  }}
-                >
-                  Read More
-                </Button>
-              )}
-            </Box>
-            {skills.length > 0 && (
-              <Box>
-                <Stack
-                  direction="row"
-                  spacing={1}
-                  sx={{ flexWrap: "wrap", gap: 1 }}
-                >
-                  {skills.slice(0, 3).map((skill, index) => (
-                    <Chip
-                      key={index}
-                      label={skill}
-                      size="small"
-                      variant="outlined"
-                      sx={{
-                        backgroundColor: "primary.50",
-                        borderColor: "primary.200",
-                        "&:hover": {
-                          backgroundColor: "primary.100",
-                        },
-                      }}
-                    />
-                  ))}
-                  {skills.length > 3 && (
-                    <Chip
-                      label={`+${skills.length - 3} more`}
-                      size="small"
-                      variant="outlined"
-                      sx={{ color: "text.secondary" }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setOpenDialog(true);
-                        setSelectedSkills(skills);
-                      }}
-                    />
-                  )}
-                </Stack>
-              </Box>
-            )}
-          </Stack>
-        </CardContent>
-        <Divider />
-        <CardActions sx={{ p: 2, pt: 1.5 }}>
-          <Button
-            href={job.job_url}
-            target="_blank"
-            variant="contained"
-            size="medium"
-            startIcon={<LaunchIcon />}
-            sx={{
-              textTransform: "none",
-              borderRadius: 2,
-              fontWeight: 500,
-              flex: 1,
-              backgroundColor: "#293548",
-              "&:hover": {
-                backgroundColor: "#293548",
-                opacity: 0.9,
-              },
-            }}
-          >
-            View Job
-          </Button>
-        </CardActions>
-      </Card>
-    );
-  };
-
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Paper
-        elevation={0}
-        sx={{
-          background: "linear-gradient(135deg, #293548 0%, #334155 100%)",
-          color: "white",
-          p: 4,
-          mb: 4,
-          borderRadius: 3,
-        }}
-      >
-        <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
-          <Avatar
-            sx={{ bgcolor: "rgba(255,255,255,0.2)", width: 48, height: 48 }}
-          >
-            <WorkIcon />
-          </Avatar>
-          <Box>
-            <Typography
-              variant="h5"
-              component="h1"
-              sx={{ fontWeight: 700, mb: 1 }}
-            >
-              Job Search
-            </Typography>
-            <Typography variant="body1" sx={{ opacity: 0.9 }}>
-              Search and manage your job opportunities
-            </Typography>
-          </Box>
-        </Stack>
-      </Paper>
-      <Paper elevation={1} sx={{ p: 3, mb: 4, borderRadius: 2 }}>
-        <Tabs value={tabValue} onChange={handleTabChange} sx={{ mb: 3 }}>
-          <Tab label="Search Jobs" />
-          <Tab label="History" />
-        </Tabs>
-        {tabValue === 0 && (
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={4}>
-              <TextField
-                label="Keywords"
-                value={keywords}
-                onChange={(e) => setKeywords(e.target.value)}
-                fullWidth
-                size="medium"
-                InputProps={{
-                  startAdornment: (
-                    <SearchIcon sx={{ color: "text.secondary", mr: 1 }} />
-                  ),
-                }}
-                sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
-              />
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <TextField
-                label="Location"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                fullWidth
-                size="medium"
-                InputProps={{
-                  startAdornment: (
-                    <LocationIcon sx={{ color: "text.secondary", mr: 1 }} />
-                  ),
-                }}
-                sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
-              />
-            </Grid>
-            <Grid item xs={12} md={2}>
-              <FormControl
-                fullWidth
-                sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
-              >
-                {/* <InputLabel id="page-size-label">Jobs per page</InputLabel>
-                <Select
-                  labelId="page-size-label"
-                  value={pageSize}
-                  onChange={handlePageSizeChange}
-                  label="Jobs per page"
-                  size="medium"
-                >
-                  <MenuItem value={5}>5</MenuItem>
-                  <MenuItem value={10}>10</MenuItem>
-                  <MenuItem value={25}>25</MenuItem>
-                  <MenuItem value={100}>100</MenuItem>
-                </Select> */}
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} md={2}>
-              <Box
-                sx={{ display: "flex", alignItems: "center", height: "100%" }}
-              >
-                {loading && <CircularProgress size={24} />}
-              </Box>
-            </Grid>
-          </Grid>
-        )}
-        {tabValue === 1 && (
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={2} width={200}>
-              <FormControl
-                fullWidth
-                sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
-              >
-                <InputLabel id="page-size-label">Jobs per page</InputLabel>
-                <Select
-                  labelId="page-size-label"
-                  value={pageSize}
-                  onChange={handlePageSizeChange}
-                  label="Jobs per page"
-                  size="medium"
-                >
-                  <MenuItem value={5}>5</MenuItem>
-                  <MenuItem value={10}>10</MenuItem>
-                  <MenuItem value={25}>25</MenuItem>
-                  <MenuItem value={100}>100</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} md={10}>
-              <Box
-                sx={{ display: "flex", alignItems: "center", height: "100%" }}
-              >
-                {loading && <CircularProgress size={24} />}
-              </Box>
-            </Grid>
-          </Grid>
-        )}
-      </Paper>
-      {error && (
-        <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
-          {error}
-        </Alert>
-      )}
-      {message && !loading && (
-        <Alert severity="info" sx={{ mb: 3, borderRadius: 2 }}>
-          {message}
-        </Alert>
-      )}
-      {jobs.length > 0 && (
-        <Box sx={{ mb: 3 }}>
-          <Button
-            variant="contained"
-            onClick={handleDownload}
-            sx={{
-              mb: 2,
-              backgroundColor: "#293548",
-              "&:hover": { backgroundColor: "#293548", opacity: 0.9 },
-            }}
-          >
-            Download Excel
-          </Button>
-          <Grid container spacing={3}>
-            {loading
-              ? Array.from({ length: pageSize }).map((_, index) => (
-                  <Grid item xs={12} sm={6} lg={4} key={index}>
-                    <JobSkeleton />
-                  </Grid>
-                ))
-              : jobs.map((job) => (
-                  <Grid item xs={12} sm={6} lg={4} key={job.job_id}>
-                    <JobCard job={job} />
-                  </Grid>
-                ))}
-          </Grid>
-        </Box>
-      )}
-      {!loading && jobs.length === 0 && !error && (
+    <Box sx={{ minHeight: "100vh", backgroundColor: "#f8fafc" }}>
+      <Container maxWidth="xl" sx={{ py: { xs: 2.5, sm: 3.5, md: 4 } }}>
+        {/* Banner */}
         <Paper
           elevation={0}
           sx={{
-            textAlign: "center",
-            py: 8,
-            backgroundColor: "#293548",
-            borderRadius: 2,
+            background: "linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #0284c7 140%)",
+            color: "white",
+            p: { xs: 3, sm: 4 },
+            mb: { xs: 3, sm: 4 },
+            borderRadius: 4,
+            boxShadow: "0 10px 30px -10px rgba(15, 23, 42, 0.3)",
           }}
         >
-          <WorkIcon sx={{ fontSize: 64, color: "white", mb: 2 }} />
-          <Typography variant="h6" color="white" sx={{ mb: 1 }}>
-            No jobs found
-          </Typography>
-          <Typography variant="body2" color="white">
-            {tabValue === 0
-              ? "Try adjusting your search criteria or save some jobs to get started"
-              : "No job history available"}
-          </Typography>
-        </Paper>
-      )}
-      {numPages > 1 && tabValue === 1 && (
-        <Box sx={{ mt: 4, display: "flex", justifyContent: "center" }}>
-          <Pagination
-            count={numPages}
-            page={page}
-            onChange={handlePageChange}
-            color="primary"
-            size="large"
-            sx={{
-              "& .MuiPaginationItem-root": {
-                borderRadius: 2,
-                color: "black",
-                "&:hover": {
-                  opacity: 0.9,
-                },
-                "&.Mui-selected": {
-                  backgroundColor: "#293548",
-                  color: "white",
-                },
-              },
-            }}
-          />
-        </Box>
-      )}
-      <Dialog
-        open={openDialog}
-        onClose={() => setOpenDialog(false)}
-        maxWidth="md"
-        fullWidth
-        PaperProps={{
-          elevation: 8,
-          sx: {
-            borderRadius: 3,
-            background: 'linear-gradient(135deg, #f5f7fa 0%, #9797979d 100%)',
-          },
-        }}
-      >
-        <DialogTitle
-          sx={{
-            background: 'linear-gradient(45deg, #272e38 30%, #313e52 90%)',
-            color: 'white',
-            textAlign: 'center',
-            fontWeight: 'bold',
-            fontSize: '1.5rem',
-            py: 3,
-            position: 'relative',
-            '&::after': {
-              content: '""',
-              position: 'absolute',
-              bottom: 0,
-              left: '50%',
-              transform: 'translateX(-50%)',
-              width: '60px',
-              height: '4px',
-              backgroundColor: 'rgba(255, 255, 255, 0.7)',
-              borderRadius: '2px',
-            },
-          }}
-        >
-          <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
-            <StarIcon />
-            Skills & Expertise
-          </Box>
-        </DialogTitle>
-        <DialogContent
-          dividers={false}
-          sx={{
-            p: 0,
-            backgroundColor: 'transparent',
-          }}
-        >
-          <Box sx={{ p: 3 }}>
-            {selectedSkills.length > 0 ? (
-              <Grid container spacing={2}>
-                {selectedSkills.map((skill, index) => (
-                  <Grid item xs={12} sm={6} md={4} key={index}>
-                    <Card
-                      elevation={2}
-                      sx={{
-                        transition: 'all 0.3s ease-in-out',
-                        cursor: 'pointer',
-                        borderRadius: 2,
-                        background: 'linear-gradient(145deg, #ffffff 0%, #f0f2f5 100%)',
-                        border: '1px solid rgba(33, 150, 243, 0.1)',
-                        '&:hover': {
-                          transform: 'translateY(-4px)',
-                          boxShadow: '0 8px 25px rgba(33, 150, 243, 0.15)',
-                          borderColor: 'primary.main',
-                        },
-                      }}
-                    >
-                      <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
-                        <Box display="flex" alignItems="center" gap={1}>
-                          <Avatar
-                            sx={{
-                              width: 32,
-                              height: 32,
-                              backgroundColor: 'primary.main',
-                              fontSize: '0.875rem',
-                            }}
-                          >
-                            {skill.charAt(0).toUpperCase()}
-                          </Avatar>
-                          <Typography
-                            variant="body1"
-                            fontWeight={500}
-                            sx={{
-                              color: 'text.primary',
-                              fontSize: '0.95rem',
-                            }}
-                          >
-                            {skill}
-                          </Typography>
-                        </Box>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                ))}
-              </Grid>
-            ) : (
-              <Box
-                display="flex"
-                flexDirection="column"
-                alignItems="center"
-                justifyContent="center"
-                py={6}
-              >
-                <Avatar
-                  sx={{
-                    width: 80,
-                    height: 80,
-                    backgroundColor: 'grey.100',
-                    mb: 2,
-                  }}
-                >
-                  <WorkIcon sx={{ fontSize: 40, color: 'grey.400' }} />
-                </Avatar>
-                <Typography variant="h6" color="text.secondary" gutterBottom>
-                  No Skills Added
-                </Typography>
-                <Typography variant="body2" color="text.secondary" textAlign="center">
-                  Skills will appear here once they are selected
-                </Typography>
-              </Box>
-            )}
-          </Box>
-        </DialogContent>
-        <DialogActions
-          sx={{
-            p: 3,
-            backgroundColor: 'rgba(245, 247, 250, 0.5)',
-            borderTop: '1px solid rgba(0, 0, 0, 0.08)',
-          }}
-        >
-          <Button
-            onClick={() => setOpenDialog(false)}
-            variant="contained"
-            size="large"
-            sx={{
-              borderRadius: 2,
-              px: 4,
-              py: 1.5,
-              textTransform: 'none',
-              fontWeight: 600,
-              background: 'linear-gradient(45deg, #212a37 30%, #313e52 90%)',
-              boxShadow: '0 4px 15px rgba(37, 47, 56, 0.3)',
-              '&:hover': {
-                background: 'linear-gradient(45deg, #1e242d 30%, #313e52 90%)',
-                boxShadow: '0 6px 20px rgba(39, 51, 61, 0.4)',
-                transform: 'translateY(-1px)',
-              },
-            }}
-          >
-            Close
-          </Button>
-        </DialogActions>
-      </Dialog>
-      <Dialog
-        open={openDescriptionDialog}
-        onClose={() => setOpenDescriptionDialog(false)}
-        maxWidth="md"
-        fullWidth
-        PaperProps={{
-          elevation: 8,
-          sx: {
-            borderRadius: 3,
-            background: 'linear-gradient(135deg, #f5f7fa 0%, #9797979d 100%)',
-          },
-        }}
-      >
-        <DialogTitle
-          sx={{
-            background: 'linear-gradient(45deg, #272e38 30%, #313e52 90%)',
-            color: 'white',
-            textAlign: 'center',
-            fontWeight: 'bold',
-            fontSize: '1.5rem',
-            py: 3,
-            position: 'relative',
-            '&::after': {
-              content: '""',
-              position: 'absolute',
-              bottom: 0,
-              left: '50%',
-              transform: 'translateX(-50%)',
-              width: '60px',
-              height: '4px',
-              backgroundColor: 'rgba(255, 255, 255, 0.7)',
-              borderRadius: '2px',
-            },
-          }}
-        >
-          <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
-            <WorkIcon />
-            Job Description
-          </Box>
-        </DialogTitle>
-        <DialogContent
-          dividers={false}
-          sx={{
-            p: 0,
-            backgroundColor: 'transparent',
-          }}
-        >
-          <Box sx={{ p: 3 }}>
-            <Card
-              elevation={2}
+          <Stack direction="row" spacing={2.5} alignItems="center">
+            <Avatar
               sx={{
-                borderRadius: 2,
-                background: 'linear-gradient(145deg, #ffffff 0%, #f0f2f5 100%)',
-                border: '1px solid rgba(33, 150, 243, 0.1)',
+                bgcolor: "rgba(255, 255, 255, 0.12)",
+                border: "1px solid rgba(255, 255, 255, 0.2)",
+                width: { xs: 52, sm: 60 },
+                height: { xs: 52, sm: 60 },
+                backdropFilter: "blur(12px)",
               }}
             >
-              <CardContent sx={{ p: 3 }}>
-                <Typography
-                  variant="h6"
-                  gutterBottom
-                  sx={{
-                    color: '#374356',
-                    fontWeight: 600,
-                    mb: 2,
-                  }}
-                >
-                  {selectedJobTitle}
-                </Typography>
-                <Typography
-                  variant="body1"
-                  sx={{
-                    color: 'text.primary',
-                    lineHeight: 1.7,
-                    whiteSpace: 'pre-wrap',
-                  }}
-                >
-                  {selectedDescription || 'No description available'}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Box>
-        </DialogContent>
-        <DialogActions
+              <HistoryIcon sx={{ fontSize: { xs: 26, sm: 30 }, color: "#38bdf8" }} />
+            </Avatar>
+            <Box>
+              <Typography
+                variant="h4"
+                component="h1"
+                sx={{
+                  fontWeight: 800,
+                  fontSize: { xs: "1.6rem", sm: "2rem" },
+                  letterSpacing: "-0.02em",
+                }}
+              >
+                Historical Scrape Log
+              </Typography>
+              <Typography variant="body1" sx={{ color: "#94a3b8", fontSize: "0.95rem" }}>
+                Browse past scraper runs, search archived job entries, and export historical pipeline data.
+              </Typography>
+            </Box>
+          </Stack>
+        </Paper>
+
+        {/* Tab & Filter Container */}
+        <Paper
+          elevation={0}
           sx={{
-            p: 3,
-            backgroundColor: 'rgba(245, 247, 250, 0.5)',
-            borderTop: '1px solid rgba(0, 0, 0, 0.08)',
+            p: { xs: 2.5, sm: 3 },
+            mb: 4,
+            borderRadius: 3.5,
+            backgroundColor: "#ffffff",
+            border: "1px solid #e2e8f0",
           }}
         >
-          <Button
-            onClick={() => setOpenDescriptionDialog(false)}
-            variant="contained"
-            size="large"
+          <Tabs
+            value={tabValue}
+            onChange={handleTabChange}
             sx={{
-              borderRadius: 2,
-              px: 4,
-              py: 1.5,
-              textTransform: 'none',
-              fontWeight: 600,
-              background: 'linear-gradient(45deg, #212a37 30%, #313e52 90%)',
-              boxShadow: '0 4px 15px rgba(37, 47, 56, 0.3)',
-              '&:hover': {
-                background: 'linear-gradient(45deg, #1e242d 30%, #313e52 90%)',
-                boxShadow: '0 6px 20px rgba(39, 51, 61, 0.4)',
-                transform: 'translateY(-1px)',
+              mb: 3,
+              minHeight: 44,
+              "& .MuiTab-root": {
+                textTransform: "none",
+                fontWeight: 600,
+                fontSize: "0.95rem",
+                borderRadius: 2,
+                minHeight: 42,
+                px: 2.5,
+                color: "#64748b",
+                "&.Mui-selected": {
+                  color: "#2563eb",
+                  backgroundColor: "#eff6ff",
+                },
               },
+              "& .MuiTabs-indicator": { display: "none" },
             }}
           >
-            Close
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Container>
+            <Tab label="Search Saved Postings" />
+            <Tab label="All Scraped History" />
+          </Tabs>
+
+          <Grid container spacing={2.5} alignItems="center">
+            {tabValue === 0 && (
+              <>
+                <Grid item xs={12} sm={5} md={4}>
+                  <TextField
+                    label="Search Postings"
+                    placeholder="Role keywords..."
+                    value={keywords}
+                    onChange={(e) => setKeywords(e.target.value)}
+                    fullWidth
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <SearchIcon sx={{ color: "#94a3b8" }} />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={4} md={4}>
+                  <TextField
+                    label="Location"
+                    placeholder="Location filter..."
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                    fullWidth
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <LocationIcon sx={{ color: "#94a3b8" }} />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Grid>
+              </>
+            )}
+
+            <Grid item xs={12} sm={tabValue === 0 ? 3 : 4} md={tabValue === 0 ? 2 : 3}>
+              <FormControl fullWidth>
+                <InputLabel id="page-size-label">Per Page</InputLabel>
+                <Select
+                  labelId="page-size-label"
+                  value={pageSize}
+                  onChange={handlePageSizeChange}
+                  label="Per Page"
+                >
+                  <MenuItem value={6}>6 jobs</MenuItem>
+                  <MenuItem value={12}>12 jobs</MenuItem>
+                  <MenuItem value={24}>24 jobs</MenuItem>
+                  <MenuItem value={48}>48 jobs</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+
+            {jobs.length > 0 && (
+              <Grid item xs={12} sm={12} md={tabValue === 0 ? 2 : 3} sx={{ textAlign: { md: "right" } }}>
+                <Button
+                  variant="outlined"
+                  onClick={handleDownload}
+                  disabled={downloading}
+                  startIcon={downloading ? <CircularProgress size={16} /> : <DownloadIcon />}
+                  sx={{
+                    textTransform: "none",
+                    fontWeight: 600,
+                    borderRadius: 2,
+                    borderColor: "#cbd5e1",
+                    color: "#334155",
+                    "&:hover": { borderColor: "#2563eb", color: "#2563eb", backgroundColor: "#eff6ff" },
+                  }}
+                >
+                  Export Excel
+                </Button>
+              </Grid>
+            )}
+          </Grid>
+        </Paper>
+
+        {error && (
+          <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 3, borderRadius: 2.5 }}>
+            {error}
+          </Alert>
+        )}
+        {message && !loading && (
+          <Alert severity="info" onClose={() => setMessage("")} sx={{ mb: 3, borderRadius: 2.5 }}>
+            {message}
+          </Alert>
+        )}
+
+        {/* Jobs Grid */}
+        <Grid container spacing={3}>
+          {loading
+            ? Array.from({ length: pageSize }).map((_, index) => (
+                <Grid item xs={12} sm={6} lg={4} key={index}>
+                  <JobSkeleton />
+                </Grid>
+              ))
+            : jobs.map((job) => (
+                <Grid item xs={12} sm={6} lg={4} key={job.id}>
+                  <JobCard job={job} />
+                </Grid>
+              ))}
+        </Grid>
+
+        {/* Clean Empty State */}
+        {!loading && jobs.length === 0 && !error && (
+          <Paper
+            elevation={0}
+            sx={{
+              textAlign: "center",
+              py: 8,
+              px: 3,
+              backgroundColor: "#ffffff",
+              borderRadius: 3.5,
+              border: "2px dashed #cbd5e1",
+            }}
+          >
+            <Avatar
+              sx={{
+                width: 68,
+                height: 68,
+                margin: "0 auto",
+                mb: 2,
+                bgcolor: "#eff6ff",
+                color: "#2563eb",
+              }}
+            >
+              <WorkIcon sx={{ fontSize: 32 }} />
+            </Avatar>
+            <Typography variant="h6" sx={{ fontWeight: 700, color: "#0f172a", mb: 0.5 }}>
+              No Historical Jobs Found
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 440, mx: "auto" }}>
+              {tabValue === 0
+                ? "No matching historical search records found. Try modifying your filters."
+                : "No scrape runs recorded in database yet."}
+            </Typography>
+          </Paper>
+        )}
+
+        {/* Pagination */}
+        {numPages > 1 && (
+          <Box sx={{ mt: 5, mb: 2, display: "flex", justifyContent: "center" }}>
+            <Pagination
+              count={numPages}
+              page={page}
+              onChange={handlePageChange}
+              color="primary"
+              size="large"
+              shape="rounded"
+              sx={{
+                "& .MuiPaginationItem-root": {
+                  fontWeight: 600,
+                  borderRadius: 2,
+                },
+              }}
+            />
+          </Box>
+        )}
+
+        {/* Dialog: Full Description */}
+        <Dialog
+          open={openDescriptionDialog}
+          onClose={() => setOpenDescriptionDialog(false)}
+          maxWidth="md"
+          fullWidth
+          PaperProps={{ elevation: 0, sx: { borderRadius: 3.5, p: 1 } }}
+        >
+          <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <Box>
+              <Typography variant="h6" sx={{ fontWeight: 700, color: "#0f172a" }}>
+                {selectedJobTitle}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Archived Opportunity Details
+              </Typography>
+            </Box>
+            <IconButton onClick={() => setOpenDescriptionDialog(false)} size="small">
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent dividers sx={{ borderColor: "#f1f5f9", py: 2.5 }}>
+            <Typography variant="body2" sx={{ color: "#334155", lineHeight: 1.8, whiteSpace: "pre-line" }}>
+              {selectedDescription}
+            </Typography>
+          </DialogContent>
+          <DialogActions sx={{ p: 2 }}>
+            <Button onClick={() => setOpenDescriptionDialog(false)} sx={{ fontWeight: 600 }}>
+              Close
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Dialog: Skills */}
+        <Dialog
+          open={openDialog}
+          onClose={() => setOpenDialog(false)}
+          maxWidth="sm"
+          fullWidth
+          PaperProps={{ elevation: 0, sx: { borderRadius: 3.5, p: 1 } }}
+        >
+          <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <Typography variant="h6" sx={{ fontWeight: 700, color: "#0f172a" }}>
+              Required Competencies
+            </Typography>
+            <IconButton onClick={() => setOpenDialog(false)} size="small">
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent dividers sx={{ borderColor: "#f1f5f9", py: 2.5 }}>
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+              {selectedSkills.map((skill, index) => (
+                <Chip
+                  key={index}
+                  label={skill}
+                  sx={{
+                    backgroundColor: "#eff6ff",
+                    color: "#1d4ed8",
+                    fontWeight: 600,
+                    borderRadius: "16px",
+                    border: "1px solid #dbeafe",
+                  }}
+                />
+              ))}
+            </Box>
+          </DialogContent>
+          <DialogActions sx={{ p: 2 }}>
+            <Button onClick={() => setOpenDialog(false)} sx={{ fontWeight: 600 }}>
+              Close
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Container>
+    </Box>
   );
 }
 

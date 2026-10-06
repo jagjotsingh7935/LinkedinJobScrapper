@@ -21,6 +21,9 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  IconButton,
+  Tooltip,
+  InputAdornment,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -29,7 +32,11 @@ import {
   Work as WorkIcon,
   Launch as LaunchIcon,
   Bookmark as BookmarkIcon,
-  Star as StarIcon,
+  BookmarkBorder as BookmarkBorderIcon,
+  FileDownload as DownloadIcon,
+  Tune as TuneIcon,
+  Close as CloseIcon,
+  Numbers as NumbersIcon,
 } from '@mui/icons-material';
 import { restrictSearchJobs, downloadExcel, saveJob } from './api';
 
@@ -39,6 +46,7 @@ function RestrictJobSearch() {
   const [jobLimit, setJobLimit] = useState(10);
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState(null);
   const [message, setMessage] = useState('');
   const [savedJobs, setSavedJobs] = useState(new Set());
@@ -55,187 +63,199 @@ function RestrictJobSearch() {
     try {
       const data = await restrictSearchJobs(keywords, location, jobLimit);
       setJobs(data.jobs || []);
-      setMessage(data.message || '');
+      setMessage(data.message || (data.jobs?.length > 0 ? `Found ${data.jobs.length} jobs` : 'No matching jobs found'));
     } catch (err) {
-      setError('Failed to fetch jobs. Please try again.');
+      setError('Failed to fetch jobs. Please verify filters and try again.');
     } finally {
       setLoading(false);
     }
   };
 
   const handleDownload = async () => {
+    setDownloading(true);
     try {
       await downloadExcel(jobs);
     } catch (err) {
       setError('Failed to download Excel file.');
+    } finally {
+      setDownloading(false);
     }
   };
 
   const handleSaveJob = async (jobId) => {
     try {
-      const response = await saveJob(jobId);
-      setSavedJobs(prev => new Set(prev).add(jobId));
-      setMessage('Job saved successfully!');
+      await saveJob(jobId);
+      setSavedJobs((prev) => new Set(prev).add(jobId));
+      setMessage('Job bookmarked successfully!');
     } catch (err) {
-      setError('Failed to save job. Please try again.');
+      setError('Failed to bookmark job. Please try again.');
     }
   };
 
   const JobSkeleton = () => (
-    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <CardContent sx={{ flexGrow: 1 }}>
-        <Stack spacing={2}>
-          <Skeleton variant="text" sx={{ fontSize: '1.5rem' }} />
-          <Stack direction="row" spacing={1} alignItems="center">
-            <Skeleton variant="circular" width={20} height={20} />
-            <Skeleton variant="text" width="60%" />
-          </Stack>
-          <Stack direction="row" spacing={1} alignItems="center">
-            <Skeleton variant="circular" width={20} height={20} />
-            <Skeleton variant="text" width="40%" />
-          </Stack>
-          <Skeleton variant="text" sx={{ fontSize: '0.875rem' }} />
-          <Skeleton variant="text" sx={{ fontSize: '0.875rem' }} />
-          <Stack direction="row" spacing={1}>
-            <Skeleton
-              variant="rectangular"
-              width={60}
-              height={24}
-              sx={{ borderRadius: 12 }}
-            />
-            <Skeleton
-              variant="rectangular"
-              width={80}
-              height={24}
-              sx={{ borderRadius: 12 }}
-            />
-            <Skeleton
-              variant="rectangular"
-              width={70}
-              height={24}
-              sx={{ borderRadius: 12 }}
-            />
-          </Stack>
-        </Stack>
-      </CardContent>
-      <CardActions>
-        <Skeleton
-          variant="rectangular"
-          width={100}
-          height={36}
-          sx={{ borderRadius: 1 }}
-        />
-      </CardActions>
-    </Card>
-  );
-
-  const JobCard = ({ job }) => (
     <Card
+      elevation={0}
       sx={{
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        transition: 'all 0.3s ease',
-        '&:hover': {
-          transform: 'translateY(-4px)',
-          boxShadow: (theme) => theme.shadows[8],
-        },
+        borderRadius: 3.5,
+        border: '1px solid #e2e8f0',
+        p: 2.5,
       }}
-      elevation={2}
     >
-      <CardContent sx={{ flexGrow: 1, p: 3 }}>
-        <Stack spacing={2}>
-          <Typography
-            variant="h6"
-            component="h3"
-            sx={{
-              fontWeight: 600,
-              color: '#374356',
-              lineHeight: 1.3,
-              display: '-webkit-box',
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical',
-              overflow: 'hidden',
-            }}
-          >
-            {job.job_title}
-          </Typography>
-          <Stack direction="row" spacing={1} alignItems="center">
-            <BusinessIcon sx={{ color: 'text.secondary', fontSize: 20 }} />
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{ fontWeight: 500 }}
-            >
-              {job.company}
-            </Typography>
-          </Stack>
-          <Stack direction="row" spacing={1} alignItems="center">
-            <LocationIcon sx={{ color: 'text.secondary', fontSize: 20 }} />
-            <Typography variant="body2" color="text.secondary">
-              {job.location}
-            </Typography>
-          </Stack>
-          <Box>
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{
-                display: '-webkit-box',
-                WebkitLineClamp: 3,
-                WebkitBoxOrient: 'vertical',
-                overflow: 'hidden',
-                lineHeight: 1.5,
-              }}
-            >
-              {job.job_description || 'No description available'}
-            </Typography>
-            {job.job_description && job.job_description.length > 150 && (
-              <Button
-                variant="text"
-                size="small"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setSelectedDescription(job.job_description);
-                  setSelectedJobTitle(job.job_title);
-                  setOpenDescriptionDialog(true);
-                }}
+      <Stack spacing={2} sx={{ flexGrow: 1 }}>
+        <Skeleton variant="rectangular" width="75%" height={24} sx={{ borderRadius: 1.5 }} />
+        <Stack direction="row" spacing={1} alignItems="center">
+          <Skeleton variant="circular" width={20} height={20} />
+          <Skeleton variant="text" width="50%" />
+        </Stack>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <Skeleton variant="circular" width={20} height={20} />
+          <Skeleton variant="text" width="40%" />
+        </Stack>
+        <Skeleton variant="rectangular" width="100%" height={50} sx={{ borderRadius: 1.5 }} />
+        <Stack direction="row" spacing={1}>
+          <Skeleton variant="rounded" width={65} height={24} sx={{ borderRadius: 5 }} />
+          <Skeleton variant="rounded" width={80} height={24} sx={{ borderRadius: 5 }} />
+        </Stack>
+      </Stack>
+      <Divider sx={{ my: 2 }} />
+      <Skeleton variant="rectangular" width="100%" height={38} sx={{ borderRadius: 2 }} />
+    </Card>
+  );
+
+  const JobCard = ({ job }) => {
+    const isSaved = savedJobs.has(job.id);
+    return (
+      <Card
+        elevation={0}
+        sx={{
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          borderRadius: 3.5,
+          border: '1px solid #e2e8f0',
+          backgroundColor: '#ffffff',
+          transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+          '&:hover': {
+            transform: 'translateY(-4px)',
+            borderColor: '#cbd5e1',
+            boxShadow: '0 14px 28px -6px rgba(15, 23, 42, 0.08), 0 6px 10px -4px rgba(15, 23, 42, 0.04)',
+          },
+        }}
+      >
+        <CardContent sx={{ flexGrow: 1, p: { xs: 2.5, sm: 3 } }}>
+          <Stack spacing={2}>
+            {/* Title & Save Icon */}
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 1 }}>
+              <Typography
+                variant="h6"
+                component="h3"
                 sx={{
-                  textTransform: 'none',
-                  fontWeight: 500,
-                  color: 'primary.main',
-                  p: 0,
-                  minWidth: 'auto',
-                  mt: 0.5,
-                  '&:hover': {
-                    backgroundColor: 'transparent',
-                    textDecoration: 'underline',
-                  },
+                  fontWeight: 700,
+                  color: '#0f172a',
+                  fontSize: { xs: '1.05rem', sm: '1.15rem' },
+                  lineHeight: 1.35,
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
                 }}
               >
-                Read More
-              </Button>
-            )}
-          </Box>
-          {job.skills && job.skills.length > 0 && (
-            <Box>
-              <Stack
-                direction="row"
-                spacing={1}
-                sx={{ flexWrap: 'wrap', gap: 1 }}
+                {job.job_title}
+              </Typography>
+              <Tooltip title={isSaved ? "Saved" : "Save Job"}>
+                <IconButton
+                  size="small"
+                  onClick={() => handleSaveJob(job.id)}
+                  disabled={isSaved}
+                  sx={{
+                    color: isSaved ? '#2563eb' : '#94a3b8',
+                    backgroundColor: isSaved ? '#eff6ff' : '#f8fafc',
+                    border: '1px solid',
+                    borderColor: isSaved ? '#bfdbfe' : '#e2e8f0',
+                    borderRadius: 2,
+                    '&:hover': { backgroundColor: '#eff6ff', color: '#2563eb' },
+                  }}
+                >
+                  {isSaved ? <BookmarkIcon fontSize="small" /> : <BookmarkBorderIcon fontSize="small" />}
+                </IconButton>
+              </Tooltip>
+            </Box>
+
+            <Stack spacing={1}>
+              <Stack direction="row" spacing={1} alignItems="center">
+                <Avatar sx={{ width: 24, height: 24, bgcolor: '#eff6ff', color: '#2563eb', fontSize: '0.75rem', fontWeight: 700 }}>
+                  {job.company ? job.company.charAt(0).toUpperCase() : 'C'}
+                </Avatar>
+                <Typography variant="body2" sx={{ fontWeight: 600, color: '#334155' }}>
+                  {job.company || 'Confidential'}
+                </Typography>
+              </Stack>
+              <Stack direction="row" spacing={1} alignItems="center">
+                <LocationIcon sx={{ color: '#64748b', fontSize: 18 }} />
+                <Typography variant="body2" sx={{ color: '#64748b', fontSize: '0.85rem' }}>
+                  {job.location || 'Location Unspecified'}
+                </Typography>
+              </Stack>
+            </Stack>
+
+            <Box sx={{ backgroundColor: '#f8fafc', p: 1.5, borderRadius: 2, border: '1px solid #f1f5f9' }}>
+              <Typography
+                variant="body2"
+                sx={{
+                  color: '#475569',
+                  display: '-webkit-box',
+                  WebkitLineClamp: 3,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
+                  lineHeight: 1.5,
+                  fontSize: '0.85rem',
+                }}
               >
+                {job.job_description || 'No detailed description available.'}
+              </Typography>
+              {job.job_description && job.job_description.length > 150 && (
+                <Button
+                  variant="text"
+                  size="small"
+                  onClick={() => {
+                    setSelectedDescription(job.job_description);
+                    setSelectedJobTitle(job.job_title);
+                    setOpenDescriptionDialog(true);
+                  }}
+                  sx={{
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    color: '#2563eb',
+                    p: 0,
+                    mt: 0.5,
+                    minWidth: 'auto',
+                    fontSize: '0.8rem',
+                    '&:hover': { backgroundColor: 'transparent', textDecoration: 'underline' },
+                  }}
+                >
+                  Read Full Description
+                </Button>
+              )}
+            </Box>
+
+            {job.skills && job.skills.length > 0 && (
+              <Stack direction="row" spacing={0.75} sx={{ flexWrap: 'wrap', gap: 0.75 }}>
                 {job.skills.slice(0, 3).map((skill, index) => (
                   <Chip
                     key={index}
                     label={skill}
                     size="small"
-                    variant="outlined"
                     sx={{
-                      backgroundColor: 'primary.50',
-                      borderColor: 'primary.200',
-                      '&:hover': {
-                        backgroundColor: 'primary.100',
-                      },
+                      backgroundColor: '#eff6ff',
+                      color: '#1d4ed8',
+                      fontWeight: 600,
+                      fontSize: '0.75rem',
+                      height: 26,
+                      borderRadius: '14px',
+                      border: '1px solid #dbeafe',
                     }}
                   />
                 ))}
@@ -243,508 +263,333 @@ function RestrictJobSearch() {
                   <Chip
                     label={`+${job.skills.length - 3} more`}
                     size="small"
-                    variant="outlined"
-                    sx={{ color: 'text.secondary' }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setOpenDialog(true);
+                    clickable
+                    onClick={() => {
                       setSelectedSkills(job.skills);
+                      setOpenDialog(true);
+                    }}
+                    sx={{
+                      backgroundColor: '#f1f5f9',
+                      color: '#475569',
+                      fontWeight: 600,
+                      fontSize: '0.75rem',
+                      height: 26,
+                      borderRadius: '14px',
+                      border: '1px solid #e2e8f0',
+                      '&:hover': { backgroundColor: '#e2e8f0' },
                     }}
                   />
                 )}
               </Stack>
-            </Box>
-          )}
-        </Stack>
-      </CardContent>
-      <Divider />
-      <CardActions sx={{ p: 2, pt: 1.5 }}>
-        <Button
-          href={job.job_url}
-          target="_blank"
-          variant="contained"
-          size="medium"
-          startIcon={<LaunchIcon />}
-          sx={{
-            textTransform: 'none',
-            borderRadius: 2,
-            fontWeight: 500,
-            flex: 1,
-            backgroundColor: '#293548',
-            '&:hover': {
-              backgroundColor: '#293548',
-              opacity: 0.9,
-            },
-          }}
-        >
-          View Job
-        </Button>
-        <Button
-          variant="contained"
-          color={savedJobs.has(job.id) ? 'success' : 'primary'}
-          onClick={() => handleSaveJob(job.id)}
-          disabled={savedJobs.has(job.id)}
-          size="medium"
-          startIcon={<BookmarkIcon />}
-          sx={{
-            textTransform: 'none',
-            borderRadius: 2,
-            fontWeight: 500,
-            backgroundColor: savedJobs.has(job.id) ? undefined : '#293548',
-            '&:hover': {
-              backgroundColor: savedJobs.has(job.id) ? undefined : '#293548',
-              opacity: 0.9,
-            },
-          }}
-        >
-          {savedJobs.has(job.id) ? 'Saved' : 'Save'}
-        </Button>
-      </CardActions>
-    </Card>
-  );
+            )}
+          </Stack>
+        </CardContent>
 
-  return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Paper
-        elevation={0}
-        sx={{
-          background: 'linear-gradient(135deg, #293548 0%, #334155 100%)',
-          color: 'white',
-          p: 4,
-          mb: 4,
-          borderRadius: 3,
-        }}
-      >
-        <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
-          <Avatar
-            sx={{ bgcolor: 'rgba(255,255,255,0.2)', width: 48, height: 48 }}
-          >
-            <WorkIcon />
-          </Avatar>
-          <Box>
-            <Typography
-              variant="h5"
-              component="h1"
-              sx={{ fontWeight: 700, mb: 1 }}
-            >
-              Restricted Job Search
-            </Typography>
-            <Typography variant="body1" sx={{ opacity: 0.9 }}>
-              Find and save restricted job opportunities with advanced filters
-            </Typography>
-          </Box>
-        </Stack>
-      </Paper>
-      <Paper elevation={1} sx={{ p: 3, mb: 4, borderRadius: 2 }}>
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} sm={4}>
-            <TextField
-              label="Keywords"
-              value={keywords}
-              onChange={(e) => setKeywords(e.target.value)}
-              fullWidth
-              size="medium"
-              InputProps={{
-                startAdornment: (
-                  <SearchIcon sx={{ color: 'text.secondary', mr: 1 }} />
-                ),
-              }}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 2,
-                },
-              }}
-            />
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <TextField
-              label="Location"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              fullWidth
-              size="medium"
-              InputProps={{
-                startAdornment: (
-                  <LocationIcon sx={{ color: 'text.secondary', mr: 1 }} />
-                ),
-              }}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 2,
-                },
-              }}
-            />
-          </Grid>
-          <Grid item xs={12} sm={2}>
-            <TextField
-              label="Job Limit"
-              type="number"
-              value={jobLimit}
-              onChange={(e) => setJobLimit(e.target.value)}
-              fullWidth
-              size="medium"
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 2,
-                },
-              }}
-            />
-          </Grid>
-          <Grid item xs={12} sm={2}>
+        <Divider sx={{ borderColor: '#f1f5f9' }} />
+
+        <CardActions sx={{ p: 2, pt: 1.5 }}>
+          {job.job_url ? (
             <Button
+              href={job.job_url}
+              target="_blank"
+              rel="noopener noreferrer"
               variant="contained"
-              onClick={handleSearch}
-              disabled={loading || !keywords || !location}
-              startIcon={<WorkIcon />}
               fullWidth
-              size="medium"
+              endIcon={<LaunchIcon sx={{ fontSize: 16 }} />}
               sx={{
                 textTransform: 'none',
                 borderRadius: 2,
-                backgroundColor: '#293548',
-                '&:hover': {
-                  backgroundColor: '#293548',
-                  opacity: 0.9,
-                },
-                height: '48px',
+                fontWeight: 600,
+                backgroundColor: '#2563eb',
+                py: 0.9,
+                '&:hover': { backgroundColor: '#1d4ed8' },
               }}
             >
-              Search
+              Apply on LinkedIn
             </Button>
-          </Grid>
-        </Grid>
-      </Paper>
-      {error && (
-        <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
-          {error}
-        </Alert>
-      )}
-      {message && !loading && (
-        <Alert severity="info" sx={{ mb: 3, borderRadius: 2 }}>
-          {message}
-        </Alert>
-      )}
-      {jobs.length > 0 && (
-        <Box sx={{ mb: 3 }}>
-          <Button
-            variant="contained"
-            onClick={handleDownload}
-            size="medium"
-            sx={{
-              textTransform: 'none',
-              borderRadius: 2,
-              backgroundColor: '#293548',
-              '&:hover': {
-                backgroundColor: '#293548',
-                opacity: 0.9,
-              },
-            }}
-          >
-            Download Excel
-          </Button>
-        </Box>
-      )}
-      <Grid container spacing={3}>
-        {loading
-          ? Array.from({ length: 6 }).map((_, index) => (
-              <Grid item xs={12} sm={6} lg={4} key={index}>
-                <JobSkeleton />
-              </Grid>
-            ))
-          : jobs.map((job) => (
-              <Grid item xs={12} sm={6} lg={4} key={job.job_id}>
-                <JobCard job={job} />
-              </Grid>
-            ))}
-      </Grid>
-      {!loading && jobs.length === 0 && !error && (
+          ) : (
+            <Button
+              variant="contained"
+              fullWidth
+              disabled={isSaved}
+              onClick={() => handleSaveJob(job.id)}
+              startIcon={isSaved ? <BookmarkIcon /> : <BookmarkBorderIcon />}
+              sx={{
+                textTransform: 'none',
+                borderRadius: 2,
+                fontWeight: 600,
+                backgroundColor: isSaved ? '#10b981' : '#2563eb',
+                py: 0.9,
+              }}
+            >
+              {isSaved ? 'Saved to Wishlist' : 'Bookmark Job'}
+            </Button>
+          )}
+        </CardActions>
+      </Card>
+    );
+  };
+
+  return (
+    <Box sx={{ minHeight: '100vh', backgroundColor: '#f8fafc' }}>
+      <Container maxWidth="xl" sx={{ py: { xs: 2.5, sm: 3.5, md: 4 } }}>
+        {/* Banner */}
         <Paper
           elevation={0}
           sx={{
-            textAlign: 'center',
-            py: 10,
-            pl: 2,
-            pr: 2,
-            backgroundColor: '#293548',
-            borderRadius: 2,
+            background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #3b82f6 140%)',
             color: 'white',
+            p: { xs: 3, sm: 4 },
+            mb: { xs: 3, sm: 4 },
+            borderRadius: 4,
+            boxShadow: '0 10px 30px -10px rgba(15, 23, 42, 0.3)',
           }}
         >
-          <WorkIcon sx={{ fontSize: 64, color: 'white', mb: 2 }} />
-          <Typography variant="h6" sx={{ mb: 1 }}>
-            No jobs found
-          </Typography>
-          <Typography variant="body2">
-            Try adjusting your search criteria to find restricted job opportunities
-          </Typography>
-        </Paper>
-      )}
-      <Dialog
-        open={openDialog}
-        onClose={() => setOpenDialog(false)}
-        maxWidth="md"
-        fullWidth
-        PaperProps={{
-          elevation: 8,
-          sx: {
-            borderRadius: 3,
-            background: 'linear-gradient(135deg, #f5f7fa 0%, #9797979d 100%)',
-          },
-        }}
-      >
-        <DialogTitle
-          sx={{
-            background: 'linear-gradient(45deg, #272e38 30%, #313e52 90%)',
-            color: 'white',
-            textAlign: 'center',
-            fontWeight: 'bold',
-            fontSize: '1.5rem',
-            py: 3,
-            position: 'relative',
-            '&::after': {
-              content: '""',
-              position: 'absolute',
-              bottom: 0,
-              left: '50%',
-              transform: 'translateX(-50%)',
-              width: '60px',
-              height: '4px',
-              backgroundColor: 'rgba(255, 255, 255, 0.7)',
-              borderRadius: '2px',
-            },
-          }}
-        >
-          <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
-            <StarIcon />
-            Skills & Expertise
-          </Box>
-        </DialogTitle>
-        <DialogContent
-          dividers={false}
-          sx={{
-            p: 0,
-            backgroundColor: 'transparent',
-          }}
-        >
-          <Box sx={{ p: 3 }}>
-            {selectedSkills.length > 0 ? (
-              <Grid container spacing={2}>
-                {selectedSkills.map((skill, index) => (
-                  <Grid item xs={12} sm={6} md={4} key={index}>
-                    <Card
-                      elevation={2}
-                      sx={{
-                        transition: 'all 0.3s ease-in-out',
-                        cursor: 'pointer',
-                        borderRadius: 2,
-                        background: 'linear-gradient(145deg, #ffffff 0%, #f0f2f5 100%)',
-                        border: '1px solid rgba(33, 150, 243, 0.1)',
-                        '&:hover': {
-                          transform: 'translateY(-4px)',
-                          boxShadow: '0 8px 25px rgba(33, 150, 243, 0.15)',
-                          borderColor: 'primary.main',
-                        },
-                      }}
-                    >
-                      <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
-                        <Box display="flex" alignItems="center" gap={1}>
-                          <Avatar
-                            sx={{
-                              width: 32,
-                              height: 32,
-                              backgroundColor: 'primary.main',
-                              fontSize: '0.875rem',
-                            }}
-                          >
-                            {skill.charAt(0).toUpperCase()}
-                          </Avatar>
-                          <Typography
-                            variant="body1"
-                            fontWeight={500}
-                            sx={{
-                              color: 'text.primary',
-                              fontSize: '0.95rem',
-                            }}
-                          >
-                            {skill}
-                          </Typography>
-                        </Box>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                ))}
-              </Grid>
-            ) : (
-              <Box
-                display="flex"
-                flexDirection="column"
-                alignItems="center"
-                justifyContent="center"
-                py={6}
-              >
-                <Avatar
-                  sx={{
-                    width: 80,
-                    height: 80,
-                    backgroundColor: 'grey.100',
-                    mb: 2,
-                  }}
-                >
-                  <WorkIcon sx={{ fontSize: 40, color: 'grey.400' }} />
-                </Avatar>
-                <Typography variant="h6" color="text.secondary" gutterBottom>
-                  No Skills Added
-                </Typography>
-                <Typography variant="body2" color="text.secondary" textAlign="center">
-                  Skills will appear here once they are selected
-                </Typography>
-              </Box>
-            )}
-          </Box>
-        </DialogContent>
-        <DialogActions
-          sx={{
-            p: 3,
-            backgroundColor: 'rgba(245, 247, 250, 0.5)',
-            borderTop: '1px solid rgba(0, 0, 0, 0.08)',
-          }}
-        >
-          <Button
-            onClick={() => setOpenDialog(false)}
-            variant="contained"
-            size="large"
-            sx={{
-              borderRadius: 2,
-              px: 4,
-              py: 1.5,
-              textTransform: 'none',
-              fontWeight: 600,
-              background: 'linear-gradient(45deg, #212a37 30%, #313e52 90%)',
-              boxShadow: '0 4px 15px rgba(37, 47, 56, 0.3)',
-              '&:hover': {
-                background: 'linear-gradient(45deg, #1e242d 30%, #313e52 90%)',
-                boxShadow: '0 6px 20px rgba(39, 51, 61, 0.4)',
-                transform: 'translateY(-1px)',
-              },
-            }}
-          >
-            Close
-          </Button>
-        </DialogActions>
-      </Dialog>
-      <Dialog
-        open={openDescriptionDialog}
-        onClose={() => setOpenDescriptionDialog(false)}
-        maxWidth="md"
-        fullWidth
-        PaperProps={{
-          elevation: 8,
-          sx: {
-            borderRadius: 3,
-            background: 'linear-gradient(135deg, #f5f7fa 0%, #9797979d 100%)',
-          },
-        }}
-      >
-        <DialogTitle
-          sx={{
-            background: 'linear-gradient(45deg, #272e38 30%, #313e52 90%)',
-            color: 'white',
-            textAlign: 'center',
-            fontWeight: 'bold',
-            fontSize: '1.5rem',
-            py: 3,
-            position: 'relative',
-            '&::after': {
-              content: '""',
-              position: 'absolute',
-              bottom: 0,
-              left: '50%',
-              transform: 'translateX(-50%)',
-              width: '60px',
-              height: '4px',
-              backgroundColor: 'rgba(255, 255, 255, 0.7)',
-              borderRadius: '2px',
-            },
-          }}
-        >
-          <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
-            <WorkIcon />
-            Job Description
-          </Box>
-        </DialogTitle>
-        <DialogContent
-          dividers={false}
-          sx={{
-            p: 0,
-            backgroundColor: 'transparent',
-          }}
-        >
-          <Box sx={{ p: 3 }}>
-            <Card
-              elevation={2}
+          <Stack direction="row" spacing={2.5} alignItems="center">
+            <Avatar
               sx={{
-                borderRadius: 2,
-                background: 'linear-gradient(145deg, #ffffff 0%, #f0f2f5 100%)',
-                border: '1px solid rgba(33, 150, 243, 0.1)',
+                bgcolor: 'rgba(255, 255, 255, 0.12)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                width: { xs: 52, sm: 60 },
+                height: { xs: 52, sm: 60 },
+                backdropFilter: 'blur(12px)',
               }}
             >
-              <CardContent sx={{ p: 3 }}>
-                <Typography
-                  variant="h6"
-                  gutterBottom
-                  sx={{
-                    color: '#374356',
-                    fontWeight: 600,
-                    mb: 2,
-                  }}
-                >
-                  {selectedJobTitle}
-                </Typography>
-                <Typography
-                  variant="body1"
-                  sx={{
-                    color: 'text.primary',
-                    lineHeight: 1.7,
-                    whiteSpace: 'pre-wrap',
-                  }}
-                >
-                  {selectedDescription || 'No description available'}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Box>
-        </DialogContent>
-        <DialogActions
+              <TuneIcon sx={{ fontSize: { xs: 26, sm: 30 }, color: '#60a5fa' }} />
+            </Avatar>
+            <Box>
+              <Typography
+                variant="h4"
+                component="h1"
+                sx={{
+                  fontWeight: 800,
+                  fontSize: { xs: '1.6rem', sm: '2rem' },
+                  letterSpacing: '-0.02em',
+                }}
+              >
+                Advanced Target Scraper
+              </Typography>
+              <Typography variant="body1" sx={{ color: '#94a3b8', fontSize: '0.95rem' }}>
+                Filter LinkedIn postings with precision constraints, extraction limits, and instant Excel export.
+              </Typography>
+            </Box>
+          </Stack>
+        </Paper>
+
+        {/* Search Parameter Card */}
+        <Paper
+          elevation={0}
           sx={{
-            p: 3,
-            backgroundColor: 'rgba(245, 247, 250, 0.5)',
-            borderTop: '1px solid rgba(0, 0, 0, 0.08)',
+            p: { xs: 2.5, sm: 3.5 },
+            mb: 4,
+            borderRadius: 3.5,
+            backgroundColor: '#ffffff',
+            border: '1px solid #e2e8f0',
           }}
         >
-          <Button
-            onClick={() => setOpenDescriptionDialog(false)}
-            variant="contained"
-            size="large"
-            sx={{
-              borderRadius: 2,
-              px: 4,
-              py: 1.5,
-              textTransform: 'none',
-              fontWeight: 600,
-              background: 'linear-gradient(45deg, #212a37 30%, #313e52 90%)',
-              boxShadow: '0 4px 15px rgba(37, 47, 56, 0.3)',
-              '&:hover': {
-                background: 'linear-gradient(45deg, #1e242d 30%, #313e52 90%)',
-                boxShadow: '0 6px 20px rgba(39, 51, 61, 0.4)',
-                transform: 'translateY(-1px)',
-              },
-            }}
-          >
-            Close
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Container>
+          <Grid container spacing={2.5} alignItems="center">
+            <Grid item xs={12} sm={5} md={5}>
+              <TextField
+                label="Role Keywords"
+                placeholder="e.g. Lead Frontend Engineer"
+                value={keywords}
+                onChange={(e) => setKeywords(e.target.value)}
+                fullWidth
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon sx={{ color: '#94a3b8' }} />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={4} md={4}>
+              <TextField
+                label="Geographic Location"
+                placeholder="e.g. San Francisco, CA"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                fullWidth
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <LocationIcon sx={{ color: '#94a3b8' }} />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={3} md={1.5}>
+              <TextField
+                label="Limit"
+                type="number"
+                value={jobLimit}
+                onChange={(e) => setJobLimit(Math.max(1, Math.min(200, Number(e.target.value))))}
+                fullWidth
+                inputProps={{ min: 1, max: 200 }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <NumbersIcon sx={{ color: '#94a3b8', fontSize: 18 }} />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={12} md={1.5}>
+              <Button
+                variant="contained"
+                onClick={handleSearch}
+                disabled={loading || !keywords || !location}
+                fullWidth
+                sx={{
+                  height: '52px',
+                  borderRadius: 2.5,
+                  fontWeight: 700,
+                  fontSize: '0.95rem',
+                  backgroundColor: '#2563eb',
+                  boxShadow: '0 4px 14px rgba(37, 99, 235, 0.25)',
+                  '&:hover': { backgroundColor: '#1d4ed8' },
+                }}
+              >
+                {loading ? <CircularProgress size={22} color="inherit" /> : 'Filter'}
+              </Button>
+            </Grid>
+          </Grid>
+        </Paper>
+
+        {error && (
+          <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 3, borderRadius: 2.5, fontWeight: 500 }}>
+            {error}
+          </Alert>
+        )}
+        {message && !loading && (
+          <Alert severity="info" onClose={() => setMessage('')} sx={{ mb: 3, borderRadius: 2.5, fontWeight: 500 }}>
+            {message}
+          </Alert>
+        )}
+
+        {/* Results Header + Download Action */}
+        {jobs.length > 0 && (
+          <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+            <Box>
+              <Typography variant="h6" sx={{ fontWeight: 700, color: '#0f172a' }}>
+                Filtered Matches ({jobs.length})
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Targeted results matching your strict criteria
+              </Typography>
+            </Box>
+
+            <Button
+              variant="outlined"
+              onClick={handleDownload}
+              disabled={downloading}
+              startIcon={downloading ? <CircularProgress size={16} /> : <DownloadIcon />}
+              sx={{
+                textTransform: 'none',
+                fontWeight: 600,
+                borderRadius: 2.5,
+                borderColor: '#cbd5e1',
+                color: '#334155',
+                '&:hover': { borderColor: '#2563eb', color: '#2563eb', backgroundColor: '#eff6ff' },
+              }}
+            >
+              Export Results as Excel
+            </Button>
+          </Box>
+        )}
+
+        {/* Job Cards Grid */}
+        <Grid container spacing={3}>
+          {loading
+            ? Array.from({ length: 6 }).map((_, index) => (
+                <Grid item xs={12} sm={6} lg={4} key={index}>
+                  <JobSkeleton />
+                </Grid>
+              ))
+            : jobs.map((job) => (
+                <Grid item xs={12} sm={6} lg={4} key={job.id}>
+                  <JobCard job={job} />
+                </Grid>
+              ))}
+        </Grid>
+
+        {/* Dialog: Description */}
+        <Dialog
+          open={openDescriptionDialog}
+          onClose={() => setOpenDescriptionDialog(false)}
+          maxWidth="md"
+          fullWidth
+          PaperProps={{ elevation: 0, sx: { borderRadius: 3.5, p: 1 } }}
+        >
+          <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Box>
+              <Typography variant="h6" sx={{ fontWeight: 700, color: '#0f172a' }}>
+                {selectedJobTitle}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Full Role Specifications
+              </Typography>
+            </Box>
+            <IconButton onClick={() => setOpenDescriptionDialog(false)} size="small">
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent dividers sx={{ borderColor: '#f1f5f9', py: 2.5 }}>
+            <Typography variant="body2" sx={{ color: '#334155', lineHeight: 1.8, whiteSpace: 'pre-line' }}>
+              {selectedDescription}
+            </Typography>
+          </DialogContent>
+          <DialogActions sx={{ p: 2 }}>
+            <Button onClick={() => setOpenDescriptionDialog(false)} sx={{ fontWeight: 600 }}>
+              Close
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Dialog: Skills */}
+        <Dialog
+          open={openDialog}
+          onClose={() => setOpenDialog(false)}
+          maxWidth="sm"
+          fullWidth
+          PaperProps={{ elevation: 0, sx: { borderRadius: 3.5, p: 1 } }}
+        >
+          <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography variant="h6" sx={{ fontWeight: 700, color: '#0f172a' }}>
+              Required Competencies
+            </Typography>
+            <IconButton onClick={() => setOpenDialog(false)} size="small">
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent dividers sx={{ borderColor: '#f1f5f9', py: 2.5 }}>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+              {selectedSkills.map((skill, index) => (
+                <Chip
+                  key={index}
+                  label={skill}
+                  sx={{
+                    backgroundColor: '#eff6ff',
+                    color: '#1d4ed8',
+                    fontWeight: 600,
+                    borderRadius: '16px',
+                    border: '1px solid #dbeafe',
+                  }}
+                />
+              ))}
+            </Box>
+          </DialogContent>
+          <DialogActions sx={{ p: 2 }}>
+            <Button onClick={() => setOpenDialog(false)} sx={{ fontWeight: 600 }}>
+              Close
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Container>
+    </Box>
   );
 }
 

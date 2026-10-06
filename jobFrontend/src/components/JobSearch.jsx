@@ -21,12 +21,6 @@ import {
   DialogContent,
   DialogActions,
   IconButton,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Tabs,
   Tab,
   Tooltip,
@@ -34,6 +28,7 @@ import {
   Collapse,
   ToggleButtonGroup,
   ToggleButton,
+  InputAdornment,
 } from "@mui/material";
 import {
   Search as SearchIcon,
@@ -47,14 +42,15 @@ import {
   Schedule as ScheduleIcon,
   Star as StarIcon,
   Close as CloseIcon,
-  Delete as DeleteIcon,
   CalendarToday as CalendarIcon,
   Numbers as NumbersIcon,
   TrendingUp as TrendingUpIcon,
-  Visibility as VisibilityIcon,
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon,
   AccessTime,
+  CheckCircle as CheckCircleIcon,
+  InfoOutlined as InfoIcon,
+  AutoAwesome as SparklesIcon,
 } from "@mui/icons-material";
 import { searchJobs, saveJob, createJobSchedule, getJobSchedules } from "./api";
 import ScheduleTable from "./ScheduleTable";
@@ -65,7 +61,7 @@ function JobSearch() {
   const [email, setEmail] = useState("");
   const [jobLimit, setJobLimit] = useState(10);
   const [selectedDays, setSelectedDays] = useState([]);
-  const [selectedTimes, setSelectedTimes] = useState([]); // e.g. ["09:00", "17:00"]
+  const [selectedTimes, setSelectedTimes] = useState([]);
   const [jobs, setJobs] = useState([]);
   const [schedules, setSchedules] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -94,30 +90,10 @@ function JobSearch() {
   ];
 
   const timeSlots = [
-    "00:00",
-    "01:00",
-    "02:00",
-    "03:00",
-    "04:00",
-    "05:00",
-    "06:00",
-    "07:00",
-    "08:00",
-    "09:00",
-    "10:00",
-    "11:00",
-    "12:00",
-    "13:00",
-    "14:00",
-    "15:00",
-    "16:00",
-    "17:00",
-    "18:00",
-    "19:00",
-    "20:00",
-    "21:00",
-    "22:00",
-    "23:00",
+    "00:00", "01:00", "02:00", "03:00", "04:00", "05:00",
+    "06:00", "07:00", "08:00", "09:00", "10:00", "11:00",
+    "12:00", "13:00", "14:00", "15:00", "16:00", "17:00",
+    "18:00", "19:00", "20:00", "21:00", "22:00", "23:00",
   ];
 
   useEffect(() => {
@@ -135,7 +111,7 @@ function JobSearch() {
 
   const handleSearch = async () => {
     if (!keywords.trim() || !location.trim() || !email.trim()) {
-      setError("Please fill in keywords, location, and email.");
+      setError("Please fill in keywords, location, and your alert email.");
       setTimeout(() => setError(null), 5000);
       return;
     }
@@ -145,13 +121,13 @@ function JobSearch() {
       const data = await searchJobs(keywords, location, email, jobLimit);
       setJobs(data.jobs || []);
       setOpenConfirmDialog(true);
-      setSuccess("Job search initiated successfully!");
+      setSuccess("Job search initiated successfully! Scraped leads are ready.");
       setTimeout(() => setSuccess(null), 5000);
       setKeywords("");
       setLocation("");
       setJobLimit(10);
     } catch (err) {
-      setError("Failed to initiate job search. Please try again.");
+      setError("Failed to initiate job search. Please verify parameters and try again.");
       setTimeout(() => setError(null), 5000);
     } finally {
       setLoading(false);
@@ -166,9 +142,7 @@ function JobSearch() {
       selectedDays.length === 0 ||
       selectedTimes.length === 0
     ) {
-      setError(
-        "Please fill in all fields including at least one day and one time.",
-      );
+      setError("Please fill in all fields including at least one scheduled day and time.");
       setTimeout(() => setError(null), 5000);
       return;
     }
@@ -177,21 +151,19 @@ function JobSearch() {
     setError(null);
 
     try {
-      // Send arrays instead of single values
       await createJobSchedule(
         email,
         keywords,
         location,
         jobLimit,
-        selectedDays, // ← array
-        selectedTimes, // ← array
+        selectedDays,
+        selectedTimes,
       );
 
       setOpenScheduleDialog(true);
-      setSuccess("Job schedule created successfully for multiple days/times!");
+      setSuccess("Automated search schedule activated successfully!");
       setTimeout(() => setSuccess(null), 5000);
 
-      // Reset form
       setKeywords("");
       setLocation("");
       setJobLimit(10);
@@ -210,7 +182,7 @@ function JobSearch() {
     try {
       await saveJob(jobId);
       setSavedJobs((prev) => new Set(prev).add(jobId));
-      setSuccess("Job saved successfully!");
+      setSuccess("Job bookmarked to your Saved Wishlist!");
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       setError("Failed to save job. Please try again.");
@@ -226,7 +198,7 @@ function JobSearch() {
   };
 
   const handleDaysChange = (event, newDays) => {
-    setSelectedDays(newDays); // newDays is already array
+    setSelectedDays(newDays);
   };
 
   const handleTimeToggle = (time) => {
@@ -237,161 +209,159 @@ function JobSearch() {
 
   const JobSkeleton = () => (
     <Card
+      elevation={0}
       sx={{
         height: "100%",
         display: "flex",
         flexDirection: "column",
         borderRadius: 3,
-        border: "1px solid rgba(0,0,0,0.06)",
+        border: "1px solid #e2e8f0",
+        p: 2.5,
       }}
-      elevation={0}
     >
-      <CardContent sx={{ flexGrow: 1, p: { xs: 2, sm: 3 } }}>
-        <Stack spacing={2}>
-          <Skeleton variant="text" sx={{ fontSize: "1.5rem" }} />
-          <Stack direction="row" spacing={1} alignItems="center">
-            <Skeleton variant="circular" width={20} height={20} />
-            <Skeleton variant="text" width="60%" />
-          </Stack>
-          <Stack direction="row" spacing={1} alignItems="center">
-            <Skeleton variant="circular" width={20} height={20} />
-            <Skeleton variant="text" width="40%" />
-          </Stack>
-          <Skeleton variant="text" sx={{ fontSize: "0.875rem" }} />
-          <Skeleton variant="text" sx={{ fontSize: "0.875rem" }} />
-          <Stack direction="row" spacing={1} flexWrap="wrap">
-            <Skeleton
-              variant="rectangular"
-              width={60}
-              height={24}
-              sx={{ borderRadius: 12 }}
-            />
-            <Skeleton
-              variant="rectangular"
-              width={80}
-              height={24}
-              sx={{ borderRadius: 12 }}
-            />
-            <Skeleton
-              variant="rectangular"
-              width={70}
-              height={24}
-              sx={{ borderRadius: 12 }}
-            />
-          </Stack>
+      <Stack spacing={2} sx={{ flexGrow: 1 }}>
+        <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
+          <Skeleton variant="rectangular" width="70%" height={24} sx={{ borderRadius: 1.5 }} />
+          <Skeleton variant="circular" width={32} height={32} />
         </Stack>
-      </CardContent>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <Skeleton variant="circular" width={20} height={20} />
+          <Skeleton variant="text" width="50%" />
+        </Stack>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <Skeleton variant="circular" width={20} height={20} />
+          <Skeleton variant="text" width="40%" />
+        </Stack>
+        <Skeleton variant="rectangular" width="100%" height={60} sx={{ borderRadius: 1.5 }} />
+        <Stack direction="row" spacing={1}>
+          <Skeleton variant="rounded" width={70} height={24} sx={{ borderRadius: 5 }} />
+          <Skeleton variant="rounded" width={85} height={24} sx={{ borderRadius: 5 }} />
+          <Skeleton variant="rounded" width={60} height={24} sx={{ borderRadius: 5 }} />
+        </Stack>
+      </Stack>
+      <Divider sx={{ my: 2 }} />
+      <Skeleton variant="rectangular" width="100%" height={40} sx={{ borderRadius: 2 }} />
     </Card>
   );
 
   const JobCard = ({ job }) => {
     const isExpanded = expandedDescription[job.job_id];
-    const truncatedDesc = job.job_description?.substring(0, 150) || "";
-    const shouldShowToggle =
-      job.job_description && job.job_description.length > 150;
+    const shouldShowToggle = job.job_description && job.job_description.length > 150;
+    const truncatedDesc = job.job_description
+      ? job.job_description.slice(0, 150)
+      : "No detailed description provided.";
+
+    const isSaved = savedJobs.has(job.job_id);
 
     return (
-      <Fade in timeout={500}>
+      <Fade in={true} timeout={400}>
         <Card
+          elevation={0}
           sx={{
             height: "100%",
             display: "flex",
             flexDirection: "column",
-            transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-            borderRadius: 3,
-            border: "1px solid rgba(0,0,0,0.06)",
+            borderRadius: 3.5,
+            border: "1px solid #e2e8f0",
+            backgroundColor: "#ffffff",
+            transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
             position: "relative",
-            overflow: "visible",
             "&:hover": {
-              transform: "translateY(-8px)",
-              boxShadow: "0 12px 40px rgba(41, 53, 72, 0.15)",
-              border: "1px solid rgba(41, 53, 72, 0.1)",
+              transform: "translateY(-4px)",
+              borderColor: "#cbd5e1",
+              boxShadow: "0 14px 28px -6px rgba(15, 23, 42, 0.08), 0 6px 10px -4px rgba(15, 23, 42, 0.04)",
             },
           }}
-          elevation={0}
         >
-          <CardContent sx={{ flexGrow: 1, p: { xs: 2, sm: 3 } }}>
+          <CardContent sx={{ flexGrow: 1, p: { xs: 2.5, sm: 3 } }}>
             <Stack spacing={2}>
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "flex-start",
-                }}
-              >
-                <Typography
-                  variant="h6"
-                  component="h3"
-                  sx={{
-                    fontWeight: 700,
-                    color: "#293548",
-                    lineHeight: 1.3,
-                    fontSize: { xs: "1rem", sm: "1.15rem" },
-                    flex: 1,
-                    pr: 1,
-                  }}
-                >
-                  {job.job_title}
-                </Typography>
-                <IconButton
-                  size="small"
-                  onClick={() => handleSaveJob(job.job_id)}
-                  disabled={savedJobs.has(job.job_id)}
-                  sx={{
-                    color: savedJobs.has(job.job_id)
-                      ? "#293548"
-                      : "rgba(41, 53, 72, 0.5)",
-                    "&:hover": {
-                      backgroundColor: "rgba(41, 53, 72, 0.08)",
-                    },
-                  }}
-                >
-                  {savedJobs.has(job.job_id) ? (
-                    <BookmarkIcon />
-                  ) : (
-                    <BookmarkBorderIcon />
-                  )}
-                </IconButton>
+              {/* Header: Title + Bookmark */}
+              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 1 }}>
+                <Box sx={{ flex: 1 }}>
+                  <Typography
+                    variant="h6"
+                    component="h3"
+                    sx={{
+                      fontWeight: 700,
+                      color: "#0f172a",
+                      fontSize: { xs: "1.05rem", sm: "1.15rem" },
+                      lineHeight: 1.35,
+                      letterSpacing: "-0.01em",
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
+                    }}
+                  >
+                    {job.job_title}
+                  </Typography>
+                </Box>
+                <Tooltip title={isSaved ? "Saved in Wishlist" : "Save Job"}>
+                  <IconButton
+                    size="small"
+                    onClick={() => handleSaveJob(job.job_id)}
+                    disabled={isSaved}
+                    sx={{
+                      color: isSaved ? "#2563eb" : "#94a3b8",
+                      backgroundColor: isSaved ? "#eff6ff" : "#f8fafc",
+                      border: "1px solid",
+                      borderColor: isSaved ? "#bfdbfe" : "#e2e8f0",
+                      borderRadius: 2,
+                      "&:hover": {
+                        backgroundColor: "#eff6ff",
+                        color: "#2563eb",
+                        borderColor: "#93c5fd",
+                      },
+                    }}
+                  >
+                    {isSaved ? <BookmarkIcon fontSize="small" /> : <BookmarkBorderIcon fontSize="small" />}
+                  </IconButton>
+                </Tooltip>
               </Box>
 
-              <Stack direction="row" spacing={1} alignItems="center">
-                <BusinessIcon
-                  sx={{ color: "rgba(41, 53, 72, 0.7)", fontSize: 18 }}
-                />
-                <Typography
-                  variant="body2"
-                  sx={{
-                    fontWeight: 600,
-                    color: "rgba(41, 53, 72, 0.8)",
-                    fontSize: { xs: "0.813rem", sm: "0.875rem" },
-                  }}
-                >
-                  {job.company}
-                </Typography>
+              {/* Company & Location Badges */}
+              <Stack spacing={1}>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <Avatar
+                    sx={{
+                      width: 26,
+                      height: 26,
+                      bgcolor: "#eff6ff",
+                      color: "#2563eb",
+                      fontSize: "0.75rem",
+                      fontWeight: 700,
+                    }}
+                  >
+                    {job.company ? job.company.charAt(0).toUpperCase() : "C"}
+                  </Avatar>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontWeight: 600,
+                      color: "#334155",
+                      fontSize: "0.875rem",
+                    }}
+                  >
+                    {job.company || "Company Confidential"}
+                  </Typography>
+                </Stack>
+
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <LocationIcon sx={{ color: "#64748b", fontSize: 18 }} />
+                  <Typography variant="body2" sx={{ color: "#64748b", fontSize: "0.85rem" }}>
+                    {job.location || "Remote / Unspecified"}
+                  </Typography>
+                </Stack>
               </Stack>
 
-              <Stack direction="row" spacing={1} alignItems="center">
-                <LocationIcon
-                  sx={{ color: "rgba(41, 53, 72, 0.6)", fontSize: 18 }}
-                />
+              {/* Description Snippet */}
+              <Box sx={{ backgroundColor: "#f8fafc", p: 1.75, borderRadius: 2.5, border: "1px solid #f1f5f9" }}>
                 <Typography
                   variant="body2"
                   sx={{
-                    color: "rgba(41, 53, 72, 0.7)",
-                    fontSize: { xs: "0.813rem", sm: "0.875rem" },
-                  }}
-                >
-                  {job.location}
-                </Typography>
-              </Stack>
-
-              <Box>
-                <Typography
-                  variant="body2"
-                  sx={{
-                    color: "rgba(41, 53, 72, 0.75)",
+                    color: "#475569",
                     lineHeight: 1.6,
-                    fontSize: { xs: "0.813rem", sm: "0.875rem" },
+                    fontSize: "0.85rem",
                   }}
                 >
                   {isExpanded ? job.job_description : truncatedDesc}
@@ -401,70 +371,66 @@ function JobSearch() {
                   <Button
                     size="small"
                     onClick={() => toggleDescription(job.job_id)}
-                    endIcon={
-                      isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />
-                    }
+                    endIcon={isExpanded ? <ExpandLessIcon sx={{ fontSize: 16 }} /> : <ExpandMoreIcon sx={{ fontSize: 16 }} />}
                     sx={{
                       textTransform: "none",
                       fontWeight: 600,
-                      color: "#293548",
+                      color: "#2563eb",
                       p: 0,
                       mt: 0.5,
                       minWidth: "auto",
-                      fontSize: { xs: "0.75rem", sm: "0.813rem" },
+                      fontSize: "0.8rem",
                       "&:hover": {
                         backgroundColor: "transparent",
                         textDecoration: "underline",
                       },
                     }}
                   >
-                    {isExpanded ? "Show Less" : "Read More"}
+                    {isExpanded ? "Show less" : "Read more"}
                   </Button>
                 )}
               </Box>
 
+              {/* Skills Chips */}
               {job.skills && job.skills.length > 0 && (
                 <Box>
-                  <Stack
-                    direction="row"
-                    spacing={1}
-                    sx={{ flexWrap: "wrap", gap: 1 }}
-                  >
+                  <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", gap: 0.75 }}>
                     {job.skills.slice(0, 3).map((skill, index) => (
                       <Chip
                         key={index}
                         label={skill}
                         size="small"
                         sx={{
-                          backgroundColor: "rgba(41, 53, 72, 0.08)",
-                          color: "#293548",
-                          fontWeight: 500,
-                          fontSize: { xs: "0.688rem", sm: "0.75rem" },
-                          height: { xs: 24, sm: 28 },
-                          border: "1px solid rgba(41, 53, 72, 0.15)",
-                          "&:hover": {
-                            backgroundColor: "rgba(41, 53, 72, 0.12)",
-                          },
+                          backgroundColor: "#eff6ff",
+                          color: "#1d4ed8",
+                          fontWeight: 600,
+                          fontSize: "0.75rem",
+                          height: 26,
+                          borderRadius: "14px",
+                          border: "1px solid #dbeafe",
                         }}
                       />
                     ))}
                     {job.skills.length > 3 && (
                       <Chip
-                        label={`+${job.skills.length - 3}`}
+                        label={`+${job.skills.length - 3} more`}
                         size="small"
+                        clickable
                         onClick={() => {
                           setSelectedSkills(job.skills);
+                          setSelectedJobTitle(job.job_title);
                           setOpenSkillsDialog(true);
                         }}
                         sx={{
-                          backgroundColor: "#293548",
-                          color: "white",
+                          backgroundColor: "#f1f5f9",
+                          color: "#475569",
                           fontWeight: 600,
-                          fontSize: { xs: "0.688rem", sm: "0.75rem" },
-                          height: { xs: 24, sm: 28 },
-                          cursor: "pointer",
+                          fontSize: "0.75rem",
+                          height: 26,
+                          borderRadius: "14px",
+                          border: "1px solid #e2e8f0",
                           "&:hover": {
-                            backgroundColor: "#1e2836",
+                            backgroundColor: "#e2e8f0",
                           },
                         }}
                       />
@@ -475,31 +441,32 @@ function JobSearch() {
             </Stack>
           </CardContent>
 
-          <Divider sx={{ borderColor: "rgba(0,0,0,0.06)" }} />
+          <Divider sx={{ borderColor: "#f1f5f9" }} />
 
-          <CardActions sx={{ p: { xs: 1.5, sm: 2 }, gap: 1 }}>
+          <CardActions sx={{ p: 2, pt: 1.5, display: "flex", gap: 1 }}>
             <Button
               href={job.job_url}
               target="_blank"
+              rel="noopener noreferrer"
               variant="contained"
               size="medium"
               fullWidth
-              endIcon={<LaunchIcon />}
+              endIcon={<LaunchIcon sx={{ fontSize: 16 }} />}
               sx={{
                 textTransform: "none",
                 borderRadius: 2,
                 fontWeight: 600,
-                fontSize: { xs: "0.813rem", sm: "0.875rem" },
-                py: { xs: 0.75, sm: 1 },
-                backgroundColor: "#293548",
-                boxShadow: "0 4px 12px rgba(41, 53, 72, 0.15)",
+                fontSize: "0.875rem",
+                py: 0.9,
+                backgroundColor: "#2563eb",
+                boxShadow: "0 4px 12px rgba(37, 99, 235, 0.2)",
                 "&:hover": {
-                  backgroundColor: "#1e2836",
-                  boxShadow: "0 6px 16px rgba(41, 53, 72, 0.25)",
+                  backgroundColor: "#1d4ed8",
+                  boxShadow: "0 6px 16px rgba(37, 99, 235, 0.3)",
                 },
               }}
             >
-              Apply Now
+              Apply on LinkedIn
             </Button>
           </CardActions>
         </Card>
@@ -508,80 +475,116 @@ function JobSearch() {
   };
 
   return (
-    <Box sx={{ minHeight: "100vh", backgroundColor: "#f8f9fa" }}>
-      <Container maxWidth="xl" sx={{ py: { xs: 2, sm: 3, md: 4 } }}>
-        {/* Header */}
+    <Box sx={{ minHeight: "100vh", backgroundColor: "#f8fafc" }}>
+      <Container maxWidth="xl" sx={{ py: { xs: 2.5, sm: 3.5, md: 4 } }}>
+        {/* Executive Page Header Banner */}
         <Paper
           elevation={0}
           sx={{
-            background: "linear-gradient(135deg, #293548 0%, #3d4f66 100%)",
+            background: "linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #2563eb 120%)",
             color: "white",
             p: { xs: 3, sm: 4 },
             mb: { xs: 3, sm: 4 },
             borderRadius: 4,
             position: "relative",
             overflow: "hidden",
-            "&::before": {
+            boxShadow: "0 10px 30px -10px rgba(15, 23, 42, 0.35)",
+            "&::after": {
               content: '""',
               position: "absolute",
-              top: 0,
-              right: 0,
-              width: "40%",
-              height: "100%",
-              background:
-                "linear-gradient(90deg, transparent, rgba(255,255,255,0.05))",
+              top: "-50%",
+              right: "-10%",
+              width: "450px",
+              height: "450px",
+              background: "radial-gradient(circle, rgba(59, 130, 246, 0.2) 0%, transparent 70%)",
               pointerEvents: "none",
             },
           }}
         >
-          <Stack
-            direction={{ xs: "column", sm: "row" }}
-            spacing={2}
-            alignItems="center"
-          >
-            <Avatar
-              sx={{
-                bgcolor: "rgba(255,255,255,0.15)",
-                width: { xs: 56, sm: 64 },
-                height: { xs: 56, sm: 64 },
-                backdropFilter: "blur(10px)",
-              }}
-            >
-              <WorkIcon sx={{ fontSize: { xs: 28, sm: 32 } }} />
-            </Avatar>
-            <Box sx={{ textAlign: { xs: "center", sm: "left" } }}>
-              <Typography
-                variant="h4"
-                component="h1"
-                sx={{
-                  fontWeight: 800,
-                  mb: 0.5,
-                  fontSize: { xs: "1.75rem", sm: "2.125rem" },
-                }}
+          <Grid container spacing={3} alignItems="center" justifyContent="space-between">
+            <Grid item xs={12} md={8}>
+              <Stack direction="row" spacing={2.5} alignItems="center">
+                <Avatar
+                  sx={{
+                    bgcolor: "rgba(255, 255, 255, 0.12)",
+                    border: "1px solid rgba(255, 255, 255, 0.2)",
+                    width: { xs: 52, sm: 60 },
+                    height: { xs: 52, sm: 60 },
+                    backdropFilter: "blur(12px)",
+                  }}
+                >
+                  <WorkIcon sx={{ fontSize: { xs: 26, sm: 30 }, color: "#60a5fa" }} />
+                </Avatar>
+                <Box>
+                  <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.5 }}>
+                    <Typography
+                      variant="h4"
+                      component="h1"
+                      sx={{
+                        fontWeight: 800,
+                        fontSize: { xs: "1.6rem", sm: "2rem" },
+                        letterSpacing: "-0.02em",
+                      }}
+                    >
+                      Job Search & Scraper
+                    </Typography>
+                    <Chip
+                      icon={<SparklesIcon sx={{ fontSize: "14px !important", color: "#60a5fa !important" }} />}
+                      label="Pro Pipeline"
+                      size="small"
+                      sx={{
+                        backgroundColor: "rgba(59, 130, 246, 0.25)",
+                        color: "#93c5fd",
+                        fontWeight: 700,
+                        fontSize: "0.75rem",
+                        display: { xs: "none", sm: "inline-flex" },
+                      }}
+                    />
+                  </Stack>
+                  <Typography
+                    variant="body1"
+                    sx={{
+                      color: "#94a3b8",
+                      fontSize: { xs: "0.875rem", sm: "0.975rem" },
+                      maxWidth: 600,
+                    }}
+                  >
+                    Extract real-time postings directly from LinkedIn or set up automated scheduled alerts delivered straight to your email.
+                  </Typography>
+                </Box>
+              </Stack>
+            </Grid>
+
+            <Grid item xs={12} md={4} sx={{ textAlign: { xs: "left", md: "right" } }}>
+              <Stack
+                direction={{ xs: "row", md: "column" }}
+                spacing={1}
+                justifyContent={{ xs: "flex-start", md: "flex-end" }}
               >
-                Job Search Portal
-              </Typography>
-              <Typography
-                variant="body1"
-                sx={{
-                  opacity: 0.95,
-                  fontSize: { xs: "0.875rem", sm: "1rem" },
-                }}
-              >
-                Find your dream job or schedule automated searches
-              </Typography>
-            </Box>
-          </Stack>
+                <Chip
+                  icon={<CheckCircleIcon sx={{ fontSize: "15px !important", color: "#34d399 !important" }} />}
+                  label="LinkedIn Scraping Engine Active"
+                  size="small"
+                  sx={{
+                    backgroundColor: "rgba(16, 185, 129, 0.15)",
+                    color: "#a7f3d0",
+                    border: "1px solid rgba(16, 185, 129, 0.3)",
+                    fontWeight: 600,
+                  }}
+                />
+              </Stack>
+            </Grid>
+          </Grid>
         </Paper>
 
-        {/* Alerts */}
+        {/* Global Notifications */}
         <Collapse in={Boolean(error || success)}>
           <Box sx={{ mb: 3 }}>
             {error && (
               <Alert
                 severity="error"
                 onClose={() => setError(null)}
-                sx={{ borderRadius: 2, mb: 2 }}
+                sx={{ borderRadius: 2.5, fontWeight: 500 }}
               >
                 {error}
               </Alert>
@@ -590,7 +593,7 @@ function JobSearch() {
               <Alert
                 severity="success"
                 onClose={() => setSuccess(null)}
-                sx={{ borderRadius: 2 }}
+                sx={{ borderRadius: 2.5, fontWeight: 500 }}
               >
                 {success}
               </Alert>
@@ -598,162 +601,147 @@ function JobSearch() {
           </Box>
         </Collapse>
 
-        {/* Tabs */}
+        {/* Mode Selector Tabs */}
         <Paper
           elevation={0}
-          sx={{ mb: { xs: 2, sm: 3 }, borderRadius: 3, overflow: "hidden" }}
+          sx={{
+            mb: { xs: 2.5, sm: 3.5 },
+            borderRadius: 3,
+            p: 0.75,
+            backgroundColor: "#ffffff",
+            border: "1px solid #e2e8f0",
+          }}
         >
           <Tabs
             value={activeTab}
             onChange={(e, newValue) => setActiveTab(newValue)}
             sx={{
-              backgroundColor: "white",
+              minHeight: 48,
               "& .MuiTab-root": {
                 textTransform: "none",
                 fontWeight: 600,
-                fontSize: { xs: "0.875rem", sm: "1rem" },
-                minHeight: { xs: 56, sm: 64 },
-                color: "rgba(41, 53, 72, 0.6)",
-              },
-              "& .Mui-selected": {
-                color: "#293548 !important",
+                fontSize: "0.95rem",
+                borderRadius: 2,
+                minHeight: 46,
+                px: 3,
+                color: "#64748b",
+                transition: "all 0.2s",
+                "&.Mui-selected": {
+                  color: "#2563eb",
+                  backgroundColor: "#eff6ff",
+                },
               },
               "& .MuiTabs-indicator": {
-                backgroundColor: "#293548",
-                height: 3,
+                display: "none",
               },
             }}
           >
             <Tab
-              icon={<SearchIcon />}
+              icon={<SearchIcon fontSize="small" />}
               iconPosition="start"
-              label="Search Jobs"
+              label="Instant Live Search"
             />
             <Tab
-              icon={<ScheduleIcon />}
+              icon={<ScheduleIcon fontSize="small" />}
               iconPosition="start"
-              label="Schedule Search"
+              label={`Automated Schedules (${schedules.length})`}
             />
           </Tabs>
         </Paper>
 
-        {/* Search Form */}
+        {/* TAB 0: Instant Search Form */}
         {activeTab === 0 && (
           <Paper
             elevation={0}
-            sx={{ p: { xs: 2, sm: 3 }, mb: { xs: 3, sm: 4 }, borderRadius: 3 }}
+            sx={{
+              p: { xs: 2.5, sm: 3.5 },
+              mb: { xs: 3, sm: 4 },
+              borderRadius: 3.5,
+              backgroundColor: "#ffffff",
+              border: "1px solid #e2e8f0",
+              boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.02)",
+            }}
           >
-            <Grid container spacing={{ xs: 2, sm: 2.5 }}>
-              <Grid item xs={12} sm={6} md={3}>
+            <Box sx={{ mb: 2.5 }}>
+              <Typography variant="h6" sx={{ fontWeight: 700, color: "#0f172a", fontSize: "1.1rem" }}>
+                Query Parameters
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Provide role titles, target location, and your report email to trigger the LinkedIn crawler.
+              </Typography>
+            </Box>
+
+            <Grid container spacing={2.5}>
+              <Grid item xs={12} sm={6} md={3.5}>
                 <TextField
-                  label="Keywords"
-                  placeholder="e.g., React Developer"
+                  label="Job Keywords / Role"
+                  placeholder="e.g. React Developer, Cloud Architect"
                   value={keywords}
                   onChange={(e) => setKeywords(e.target.value)}
                   fullWidth
                   InputProps={{
                     startAdornment: (
-                      <SearchIcon
-                        sx={{ color: "rgba(41, 53, 72, 0.5)", mr: 1 }}
-                      />
+                      <InputAdornment position="start">
+                        <SearchIcon sx={{ color: "#94a3b8" }} />
+                      </InputAdornment>
                     ),
-                  }}
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: 2,
-                      "&:hover fieldset": {
-                        borderColor: "#293548",
-                      },
-                      "&.Mui-focused fieldset": {
-                        borderColor: "#293548",
-                      },
-                    },
                   }}
                 />
               </Grid>
-              <Grid item xs={12} sm={6} md={3}>
+
+              <Grid item xs={12} sm={6} md={3.5}>
                 <TextField
-                  label="Location"
-                  placeholder="e.g., New York"
+                  label="Target Location"
+                  placeholder="e.g. United States, London, Remote"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
                   fullWidth
                   InputProps={{
                     startAdornment: (
-                      <LocationIcon
-                        sx={{ color: "rgba(41, 53, 72, 0.5)", mr: 1 }}
-                      />
+                      <InputAdornment position="start">
+                        <LocationIcon sx={{ color: "#94a3b8" }} />
+                      </InputAdornment>
                     ),
-                  }}
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: 2,
-                      "&:hover fieldset": {
-                        borderColor: "#293548",
-                      },
-                      "&.Mui-focused fieldset": {
-                        borderColor: "#293548",
-                      },
-                    },
                   }}
                 />
               </Grid>
+
               <Grid item xs={12} sm={6} md={3}>
                 <TextField
-                  label="Email"
+                  label="Delivery Email"
                   type="email"
-                  placeholder="your@email.com"
+                  placeholder="name@company.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   fullWidth
                   InputProps={{
                     startAdornment: (
-                      <EmailIcon
-                        sx={{ color: "rgba(41, 53, 72, 0.5)", mr: 1 }}
-                      />
+                      <InputAdornment position="start">
+                        <EmailIcon sx={{ color: "#94a3b8" }} />
+                      </InputAdornment>
                     ),
-                  }}
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: 2,
-                      "&:hover fieldset": {
-                        borderColor: "#293548",
-                      },
-                      "&.Mui-focused fieldset": {
-                        borderColor: "#293548",
-                      },
-                    },
                   }}
                 />
               </Grid>
-              <Grid item xs={12} sm={6} md={3}>
+
+              <Grid item xs={12} sm={6} md={2}>
                 <TextField
-                  label="Job Limit"
+                  label="Max Postings"
                   type="number"
                   value={jobLimit}
-                  onChange={(e) => setJobLimit(Number(e.target.value))}
+                  onChange={(e) => setJobLimit(Math.max(1, Math.min(200, Number(e.target.value))))}
                   fullWidth
-                  inputProps={{ min: 1, max: 100 }}
+                  inputProps={{ min: 1, max: 200 }}
                   InputProps={{
                     startAdornment: (
-                      <NumbersIcon
-                        sx={{ color: "rgba(41, 53, 72, 0.5)", mr: 1 }}
-                      />
+                      <InputAdornment position="start">
+                        <NumbersIcon sx={{ color: "#94a3b8" }} />
+                      </InputAdornment>
                     ),
-                  }}
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: 2,
-                      "&:hover fieldset": {
-                        borderColor: "#293548",
-                      },
-                      "&.Mui-focused fieldset": {
-                        borderColor: "#293548",
-                      },
-                    },
                   }}
                 />
               </Grid>
+
               <Grid item xs={12}>
                 <Button
                   variant="contained"
@@ -762,368 +750,303 @@ function JobSearch() {
                   startIcon={loading ? null : <SearchIcon />}
                   fullWidth
                   sx={{
-                    textTransform: "none",
-                    borderRadius: 2,
+                    borderRadius: 2.5,
                     py: 1.5,
                     fontSize: "1rem",
-                    fontWeight: 600,
-                    backgroundColor: "#293548",
-                    boxShadow: "0 4px 14px rgba(41, 53, 72, 0.25)",
+                    fontWeight: 700,
+                    backgroundColor: "#2563eb",
+                    boxShadow: "0 6px 20px rgba(37, 99, 235, 0.25)",
                     "&:hover": {
-                      backgroundColor: "#1e2836",
-                      boxShadow: "0 6px 20px rgba(41, 53, 72, 0.35)",
-                    },
-                    "&:disabled": {
-                      backgroundColor: "rgba(41, 53, 72, 0.3)",
+                      backgroundColor: "#1d4ed8",
+                      boxShadow: "0 8px 25px rgba(37, 99, 235, 0.35)",
                     },
                   }}
                 >
-                  {loading ? "Searching..." : "Search Jobs"}
+                  {loading ? "Crawling LinkedIn Postings..." : "Initiate Live Search"}
                 </Button>
               </Grid>
             </Grid>
           </Paper>
         )}
 
-        {/* Schedule Form */}
+        {/* TAB 1: Scheduled Search Form & Management */}
         {activeTab === 1 && (
-          <Paper
-            elevation={0}
-            sx={{ p: { xs: 2, sm: 3 }, mb: { xs: 3, sm: 4 }, borderRadius: 3 }}
-          >
-            <Grid container spacing={{ xs: 2, sm: 2.5 }}>
-              <Grid item xs={12} sm={6} md={3}>
-                <TextField
-                  label="Keywords"
-                  placeholder="e.g., React Developer"
-                  value={keywords}
-                  onChange={(e) => setKeywords(e.target.value)}
-                  fullWidth
-                  InputProps={{
-                    startAdornment: (
-                      <SearchIcon
-                        sx={{ color: "rgba(41, 53, 72, 0.5)", mr: 1 }}
-                      />
-                    ),
-                  }}
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: 2,
-                      "&:hover fieldset": {
-                        borderColor: "#293548",
-                      },
-                      "&.Mui-focused fieldset": {
-                        borderColor: "#293548",
-                      },
-                    },
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <TextField
-                  label="Location"
-                  placeholder="e.g., New York"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  fullWidth
-                  InputProps={{
-                    startAdornment: (
-                      <LocationIcon
-                        sx={{ color: "rgba(41, 53, 72, 0.5)", mr: 1 }}
-                      />
-                    ),
-                  }}
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: 2,
-                      "&:hover fieldset": {
-                        borderColor: "#293548",
-                      },
-                      "&.Mui-focused fieldset": {
-                        borderColor: "#293548",
-                      },
-                    },
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <TextField
-                  label="Email"
-                  type="email"
-                  placeholder="your@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  fullWidth
-                  InputProps={{
-                    startAdornment: (
-                      <EmailIcon
-                        sx={{ color: "rgba(41, 53, 72, 0.5)", mr: 1 }}
-                      />
-                    ),
-                  }}
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: 2,
-                      "&:hover fieldset": {
-                        borderColor: "#293548",
-                      },
-                      "&.Mui-focused fieldset": {
-                        borderColor: "#293548",
-                      },
-                    },
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <TextField
-                  label="Job Limit"
-                  type="number"
-                  value={jobLimit}
-                  onChange={(e) => setJobLimit(Number(e.target.value))}
-                  fullWidth
-                  inputProps={{ min: 1, max: 100 }}
-                  InputProps={{
-                    startAdornment: (
-                      <NumbersIcon
-                        sx={{ color: "rgba(41, 53, 72, 0.5)", mr: 1 }}
-                      />
-                    ),
-                  }}
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: 2,
-                      "&:hover fieldset": {
-                        borderColor: "#293548",
-                      },
-                      "&.Mui-focused fieldset": {
-                        borderColor: "#293548",
-                      },
-                    },
-                  }}
-                />
-              </Grid>
-
-              {/* Day Selection – now multiple */}
-              <Grid item xs={12}>
-                <Typography
-                  variant="subtitle1"
-                  sx={{
-                    fontWeight: 600,
-                    color: "#293548",
-                    mb: 1.5,
-                    fontSize: { xs: "0.875rem", sm: "0.938rem" },
-                  }}
-                >
-                  Select Days
-                </Typography>
-                <ToggleButtonGroup
-                  value={selectedDays} // ← changed from selectedDay → selectedDays (array)
-                  onChange={handleDaysChange}
-                  multiple // ← important: allow multiple selection
-                  fullWidth
-                  sx={{
-                    gap: { xs: 0.5, sm: 1 },
-                    flexWrap: { xs: "wrap", sm: "nowrap" },
-                    "& .MuiToggleButton-root": {
-                      flex: { xs: "1 1 calc(33% - 8px)", sm: "1" },
-                      minWidth: { xs: "calc(33% - 8px)", sm: "auto" },
-                      textTransform: "none",
-                      fontWeight: 600,
-                      borderRadius: 2,
-                      border: "1px solid rgba(41, 53, 72, 0.2)",
-                      color: "rgba(41, 53, 72, 0.7)",
-                      py: { xs: 1, sm: 1.5 },
-                      fontSize: { xs: "0.75rem", sm: "0.813rem" },
-                      "&.Mui-selected": {
-                        backgroundColor: "#293548",
-                        color: "white",
-                        "&:hover": { backgroundColor: "#1e2836" },
-                      },
-                      "&:hover": { backgroundColor: "rgba(41, 53, 72, 0.08)" },
-                    },
-                  }}
-                >
-                  {daysOfWeek.map((day) => (
-                    <ToggleButton key={day.value} value={day.value}>
-                      {day.label}
-                    </ToggleButton>
-                  ))}
-                </ToggleButtonGroup>
-              </Grid>
-
-              {/* Time Selection – now multiple */}
-              <Grid item xs={12}>
-                <Typography
-                  variant="subtitle1"
-                  sx={{
-                    fontWeight: 600,
-                    color: "#293548",
-                    mb: 1.5,
-                    fontSize: { xs: "0.875rem", sm: "0.938rem" },
-                  }}
-                >
-                  Select Times (multiple allowed)
-                </Typography>
-                <Box
-                  sx={{
-                    display: "flex",
-                    flexWrap: "wrap",
-                    gap: 1,
-                    maxHeight: { xs: "180px", sm: "220px" },
-                    overflowY: "auto",
-                    p: 0.5,
-                    border: "1px solid rgba(41,53,72,0.12)",
-                    borderRadius: 2,
-                    backgroundColor: "rgba(41,53,72,0.02)",
-                    "&::-webkit-scrollbar": { width: "6px" },
-                    "&::-webkit-scrollbar-track": {
-                      background: "rgba(41,53,72,0.05)",
-                      borderRadius: 3,
-                    },
-                    "&::-webkit-scrollbar-thumb": {
-                      background: "rgba(41,53,72,0.3)",
-                      borderRadius: 3,
-                    },
-                  }}
-                >
-                  {timeSlots.map((slot) => (
-                    <Chip
-                      key={slot}
-                      label={slot}
-                      onClick={() => handleTimeToggle(slot)}
-                      color={
-                        selectedTimes.includes(slot) ? "primary" : "default"
-                      }
-                      variant={
-                        selectedTimes.includes(slot) ? "filled" : "outlined"
-                      }
-                      sx={{
-                        fontWeight: 600,
-                        minWidth: 76,
-                        height: 36,
-                        ...(selectedTimes.includes(slot) && {
-                          backgroundColor: "#293548",
-                          color: "white",
-                          "&:hover": { backgroundColor: "#1e2836" },
-                        }),
-                      }}
-                    />
-                  ))}
-                </Box>
-                <Box
-                  sx={{
-                    mt: 1.5,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1,
-                  }}
-                >
-                  <AccessTime
-                    sx={{ color: "rgba(41,53,72,0.7)", fontSize: 20 }}
-                  />
-                  <Typography variant="body2" color="text.secondary">
-                    Selected:{" "}
-                    {selectedTimes.length === 0
-                      ? "None"
-                      : selectedTimes.join(", ")}
-                  </Typography>
-                </Box>
-              </Grid>
-
-              <Grid item xs={12}>
-                <Button
-                  variant="contained"
-                  onClick={handleSchedule}
-                  disabled={
-                    scheduleLoading ||
-                    !keywords.trim() ||
-                    !location.trim() ||
-                    !email.trim() ||
-                    selectedDays.length === 0 ||
-                    selectedTimes.length === 0
-                  }
-                  startIcon={scheduleLoading ? null : <ScheduleIcon />}
-                  fullWidth
-                  sx={{
-                    textTransform: "none",
-                    borderRadius: 2,
-                    py: 1.5,
-                    fontSize: "1rem",
-                    fontWeight: 600,
-                    backgroundColor: "#293548",
-                    boxShadow: "0 4px 14px rgba(41, 53, 72, 0.25)",
-                    "&:hover": {
-                      backgroundColor: "#1e2836",
-                      boxShadow: "0 6px 20px rgba(41, 53, 72, 0.35)",
-                    },
-                    "&:disabled": {
-                      backgroundColor: "rgba(41, 53, 72, 0.3)",
-                    },
-                  }}
-                >
-                  {scheduleLoading ? "Creating Schedule..." : "Create Schedule"}
-                </Button>
-              </Grid>
-            </Grid>
-          </Paper>
-        )}
-
-        {activeTab === 1 && (
-          <ScheduleTable
-            schedules={schedules}
-            onUpdate={(updatedSchedule) => {
-              setSchedules((prev) =>
-                prev.map((s) =>
-                  s.id === updatedSchedule.id
-                    ? { ...s, ...updatedSchedule }
-                    : s,
-                ),
-              );
-              setSuccess("Schedule updated successfully!");
-              setTimeout(() => setSuccess(null), 4000);
-            }}
-            onDelete={(deletedId) => {
-              setSchedules((prev) => prev.filter((s) => s.id !== deletedId));
-              setSuccess("Schedule deleted successfully!");
-              setTimeout(() => setSuccess(null), 4000);
-            }}
-          />
-        )}
-
-        {/* Jobs Grid */}
-        {jobs.length > 0 && (
           <Box>
+            <Paper
+              elevation={0}
+              sx={{
+                p: { xs: 2.5, sm: 3.5 },
+                mb: { xs: 3, sm: 4 },
+                borderRadius: 3.5,
+                backgroundColor: "#ffffff",
+                border: "1px solid #e2e8f0",
+              }}
+            >
+              <Box sx={{ mb: 2.5 }}>
+                <Typography variant="h6" sx={{ fontWeight: 700, color: "#0f172a", fontSize: "1.1rem" }}>
+                  Schedule Recurring Scraper Jobs
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Set up automated cron scraper jobs that crawl LinkedIn at selected weekly intervals and email reports.
+                </Typography>
+              </Box>
+
+              <Grid container spacing={2.5}>
+                <Grid item xs={12} sm={6} md={3.5}>
+                  <TextField
+                    label="Keywords"
+                    placeholder="e.g. Senior DevOps, Backend Engineer"
+                    value={keywords}
+                    onChange={(e) => setKeywords(e.target.value)}
+                    fullWidth
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <SearchIcon sx={{ color: "#94a3b8" }} />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Grid>
+
+                <Grid item xs={12} sm={6} md={3.5}>
+                  <TextField
+                    label="Location"
+                    placeholder="e.g. Canada, Germany, Remote"
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                    fullWidth
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <LocationIcon sx={{ color: "#94a3b8" }} />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Grid>
+
+                <Grid item xs={12} sm={6} md={3}>
+                  <TextField
+                    label="Notification Email"
+                    type="email"
+                    placeholder="alerts@company.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    fullWidth
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <EmailIcon sx={{ color: "#94a3b8" }} />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Grid>
+
+                <Grid item xs={12} sm={6} md={2}>
+                  <TextField
+                    label="Job Limit"
+                    type="number"
+                    value={jobLimit}
+                    onChange={(e) => setJobLimit(Number(e.target.value))}
+                    fullWidth
+                    inputProps={{ min: 1, max: 200 }}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <NumbersIcon sx={{ color: "#94a3b8" }} />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Grid>
+
+                {/* Day Selection */}
+                <Grid item xs={12}>
+                  <Typography
+                    variant="subtitle2"
+                    sx={{ fontWeight: 700, color: "#1e293b", mb: 1.25 }}
+                  >
+                    Select Execution Days
+                  </Typography>
+                  <ToggleButtonGroup
+                    value={selectedDays}
+                    onChange={handleDaysChange}
+                    multiple
+                    fullWidth
+                    sx={{
+                      gap: 1,
+                      flexWrap: "wrap",
+                      "& .MuiToggleButton-root": {
+                        flex: { xs: "1 1 calc(33% - 8px)", sm: "1" },
+                        borderRadius: "10px !important",
+                        border: "1px solid #e2e8f0 !important",
+                        color: "#475569",
+                        fontWeight: 600,
+                        py: 1.2,
+                        textTransform: "none",
+                        "&.Mui-selected": {
+                          backgroundColor: "#2563eb !important",
+                          color: "#ffffff !important",
+                          borderColor: "#2563eb !important",
+                        },
+                        "&:hover": {
+                          backgroundColor: "#f1f5f9",
+                        },
+                      },
+                    }}
+                  >
+                    {daysOfWeek.map((day) => (
+                      <ToggleButton key={day.value} value={day.value}>
+                        {day.label}
+                      </ToggleButton>
+                    ))}
+                  </ToggleButtonGroup>
+                </Grid>
+
+                {/* Time Selection */}
+                <Grid item xs={12}>
+                  <Typography
+                    variant="subtitle2"
+                    sx={{ fontWeight: 700, color: "#1e293b", mb: 1.25 }}
+                  >
+                    Select Execution Times (UTC / 24-Hour Slots)
+                  </Typography>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: 1,
+                      maxHeight: "180px",
+                      overflowY: "auto",
+                      p: 1.5,
+                      border: "1px solid #e2e8f0",
+                      borderRadius: 2.5,
+                      backgroundColor: "#f8fafc",
+                    }}
+                  >
+                    {timeSlots.map((slot) => {
+                      const isSelected = selectedTimes.includes(slot);
+                      return (
+                        <Chip
+                          key={slot}
+                          label={slot}
+                          onClick={() => handleTimeToggle(slot)}
+                          sx={{
+                            fontWeight: 600,
+                            minWidth: 72,
+                            height: 34,
+                            borderRadius: "8px",
+                            backgroundColor: isSelected ? "#2563eb" : "#ffffff",
+                            color: isSelected ? "#ffffff" : "#475569",
+                            border: "1px solid",
+                            borderColor: isSelected ? "#2563eb" : "#cbd5e1",
+                            "&:hover": {
+                              backgroundColor: isSelected ? "#1d4ed8" : "#f1f5f9",
+                            },
+                          }}
+                        />
+                      );
+                    })}
+                  </Box>
+                  <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 1.5 }}>
+                    <AccessTime sx={{ color: "#64748b", fontSize: 18 }} />
+                    <Typography variant="body2" color="text.secondary">
+                      Active Slots:{" "}
+                      {selectedTimes.length === 0 ? (
+                        <span style={{ color: "#94a3b8" }}>None selected</span>
+                      ) : (
+                        <strong>{selectedTimes.join(", ")}</strong>
+                      )}
+                    </Typography>
+                  </Stack>
+                </Grid>
+
+                <Grid item xs={12}>
+                  <Button
+                    variant="contained"
+                    onClick={handleSchedule}
+                    disabled={
+                      scheduleLoading ||
+                      !keywords.trim() ||
+                      !location.trim() ||
+                      !email.trim() ||
+                      selectedDays.length === 0 ||
+                      selectedTimes.length === 0
+                    }
+                    startIcon={scheduleLoading ? null : <ScheduleIcon />}
+                    fullWidth
+                    sx={{
+                      borderRadius: 2.5,
+                      py: 1.5,
+                      fontSize: "1rem",
+                      fontWeight: 700,
+                      backgroundColor: "#0f172a",
+                      "&:hover": {
+                        backgroundColor: "#1e293b",
+                      },
+                    }}
+                  >
+                    {scheduleLoading ? "Configuring Schedule..." : "Save Automated Schedule"}
+                  </Button>
+                </Grid>
+              </Grid>
+            </Paper>
+
+            <ScheduleTable
+              schedules={schedules}
+              onUpdate={(updatedSchedule) => {
+                setSchedules((prev) =>
+                  prev.map((s) => (s.id === updatedSchedule.id ? { ...s, ...updatedSchedule } : s)),
+                );
+                setSuccess("Schedule updated successfully!");
+                setTimeout(() => setSuccess(null), 4000);
+              }}
+              onDelete={(deletedId) => {
+                setSchedules((prev) => prev.filter((s) => s.id !== deletedId));
+                setSuccess("Schedule deleted successfully!");
+                setTimeout(() => setSuccess(null), 4000);
+              }}
+            />
+          </Box>
+        )}
+
+        {/* Live Search Results Header & Grid */}
+        {jobs.length > 0 && activeTab === 0 && (
+          <Box sx={{ mt: 4 }}>
             <Box
               sx={{
                 mb: 3,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
+                flexWrap: "wrap",
+                gap: 2,
               }}
             >
               <Stack direction="row" alignItems="center" spacing={1.5}>
-                <Avatar
-                  sx={{
-                    bgcolor: "#293548",
-                    width: 40,
-                    height: 40,
-                  }}
-                >
-                  <TrendingUpIcon sx={{ fontSize: 20 }} />
+                <Avatar sx={{ bgcolor: "#eff6ff", color: "#2563eb", width: 42, height: 42 }}>
+                  <TrendingUpIcon sx={{ fontSize: 22 }} />
                 </Avatar>
                 <Box>
-                  <Typography
-                    variant="h6"
-                    sx={{ fontWeight: 700, color: "#293548" }}
-                  >
-                    Job Results
+                  <Typography variant="h6" sx={{ fontWeight: 700, color: "#0f172a" }}>
+                    Scraped Job Opportunities
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    {jobs.length} job{jobs.length !== 1 ? "s" : ""} found
+                    Displaying {jobs.length} freshly extracted listings
                   </Typography>
                 </Box>
               </Stack>
+
+              <Chip
+                icon={<InfoIcon sx={{ fontSize: 16 }} />}
+                label="Direct LinkedIn Links"
+                size="small"
+                sx={{ backgroundColor: "#f1f5f9", fontWeight: 600, color: "#475569" }}
+              />
             </Box>
+
             <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }}>
               {loading
                 ? Array.from({ length: 6 }).map((_, index) => (
@@ -1147,39 +1070,33 @@ function JobSearch() {
             sx={{
               p: { xs: 4, sm: 6 },
               textAlign: "center",
-              borderRadius: 3,
-              border: "2px dashed rgba(41, 53, 72, 0.2)",
+              borderRadius: 3.5,
+              border: "2px dashed #cbd5e1",
+              backgroundColor: "#ffffff",
             }}
           >
             <Avatar
               sx={{
-                width: { xs: 80, sm: 100 },
-                height: { xs: 80, sm: 100 },
+                width: 72,
+                height: 72,
                 margin: "0 auto",
                 mb: 2,
-                bgcolor: "rgba(41, 53, 72, 0.08)",
+                bgcolor: "#eff6ff",
+                color: "#2563eb",
               }}
             >
-              <SearchIcon
-                sx={{
-                  fontSize: { xs: 40, sm: 50 },
-                  color: "rgba(41, 53, 72, 0.4)",
-                }}
-              />
+              <SearchIcon sx={{ fontSize: 36 }} />
             </Avatar>
-            <Typography
-              variant="h5"
-              sx={{ fontWeight: 700, color: "#293548", mb: 1 }}
-            >
-              No Jobs Yet
+            <Typography variant="h6" sx={{ fontWeight: 700, color: "#0f172a", mb: 0.5 }}>
+              Ready to Crawl LinkedIn Postings
             </Typography>
-            <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-              Start your job search by entering keywords and location above
+            <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 440, mx: "auto", mb: 2 }}>
+              Specify role keywords, target region, and delivery email above, then trigger the scraper to fetch opportunities.
             </Typography>
           </Paper>
         )}
 
-        {/* Dialogs */}
+        {/* Dialog: Search Confirmation */}
         <Dialog
           open={openConfirmDialog}
           onClose={() => setOpenConfirmDialog(false)}
@@ -1187,79 +1104,47 @@ function JobSearch() {
           fullWidth
           PaperProps={{
             elevation: 0,
-            sx: {
-              borderRadius: 4,
-              background: "linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)",
-            },
+            sx: { borderRadius: 3.5, p: 1 },
           }}
         >
-          <DialogTitle
-            sx={{
-              background: "linear-gradient(135deg, #293548 0%, #3d4f66 100%)",
-              color: "white",
-              textAlign: "center",
-              fontWeight: 700,
-              fontSize: { xs: "1.25rem", sm: "1.5rem" },
-              py: 3,
-            }}
-          >
-            <Box
-              display="flex"
-              alignItems="center"
-              justifyContent="center"
-              gap={1}
+          <DialogTitle sx={{ textAlign: "center", fontWeight: 700, pt: 3 }}>
+            <Avatar
+              sx={{
+                bgcolor: "#eff6ff",
+                color: "#2563eb",
+                width: 56,
+                height: 56,
+                mx: "auto",
+                mb: 1.5,
+              }}
             >
-              <WorkIcon />
-              Search Initiated
-            </Box>
+              <EmailIcon sx={{ fontSize: 28 }} />
+            </Avatar>
+            Search Executed Successfully
           </DialogTitle>
-          <DialogContent sx={{ p: 4 }}>
-            <Box sx={{ textAlign: "center" }}>
-              <Avatar
-                sx={{
-                  width: 80,
-                  height: 80,
-                  margin: "0 auto",
-                  mb: 2,
-                  bgcolor: "rgba(41, 53, 72, 0.1)",
-                }}
-              >
-                <EmailIcon sx={{ fontSize: 40, color: "#293548" }} />
-              </Avatar>
-              <Typography
-                variant="body1"
-                sx={{
-                  color: "text.primary",
-                  lineHeight: 1.7,
-                  fontSize: { xs: "0.938rem", sm: "1rem" },
-                }}
-              >
-                Your job search has been queued successfully! Results will be
-                sent to your email as an Excel file shortly.
-              </Typography>
-            </Box>
+          <DialogContent sx={{ textAlign: "center", px: 4 }}>
+            <Typography variant="body1" sx={{ color: "#475569", lineHeight: 1.6 }}>
+              Your LinkedIn job scraper task was processed. Results have been displayed below, and an Excel report will be compiled for your records.
+            </Typography>
           </DialogContent>
-          <DialogActions sx={{ p: 3, justifyContent: "center" }}>
+          <DialogActions sx={{ p: 3, pt: 1, justifyContent: "center" }}>
             <Button
               onClick={() => setOpenConfirmDialog(false)}
               variant="contained"
               sx={{
                 borderRadius: 2,
                 px: 4,
-                py: 1.5,
-                textTransform: "none",
+                py: 1,
                 fontWeight: 600,
-                backgroundColor: "#293548",
-                "&:hover": {
-                  backgroundColor: "#1e2836",
-                },
+                backgroundColor: "#2563eb",
               }}
             >
-              Got It
+              View Results
             </Button>
           </DialogActions>
         </Dialog>
 
+        {/* Dialog: Schedule Confirmation */}
         <Dialog
           open={openScheduleDialog}
           onClose={() => setOpenScheduleDialog(false)}
@@ -1267,166 +1152,92 @@ function JobSearch() {
           fullWidth
           PaperProps={{
             elevation: 0,
-            sx: {
-              borderRadius: 4,
-              background: "linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)",
-            },
+            sx: { borderRadius: 3.5, p: 1 },
           }}
         >
-          <DialogTitle
-            sx={{
-              background: "linear-gradient(135deg, #293548 0%, #3d4f66 100%)",
-              color: "white",
-              textAlign: "center",
-              fontWeight: 700,
-              fontSize: { xs: "1.25rem", sm: "1.5rem" },
-              py: 3,
-            }}
-          >
-            <Box
-              display="flex"
-              alignItems="center"
-              justifyContent="center"
-              gap={1}
+          <DialogTitle sx={{ textAlign: "center", fontWeight: 700, pt: 3 }}>
+            <Avatar
+              sx={{
+                bgcolor: "#ecfdf5",
+                color: "#10b981",
+                width: 56,
+                height: 56,
+                mx: "auto",
+                mb: 1.5,
+              }}
             >
-              <ScheduleIcon />
-              Schedule Created
-            </Box>
+              <CalendarIcon sx={{ fontSize: 28 }} />
+            </Avatar>
+            Scraper Schedule Activated
           </DialogTitle>
-          <DialogContent sx={{ p: 4 }}>
-            <Box sx={{ textAlign: "center" }}>
-              <Avatar
-                sx={{
-                  width: 80,
-                  height: 80,
-                  margin: "0 auto",
-                  mb: 2,
-                  bgcolor: "rgba(41, 53, 72, 0.1)",
-                }}
-              >
-                <CalendarIcon sx={{ fontSize: 40, color: "#293548" }} />
-              </Avatar>
-              <Typography
-                variant="body1"
-                sx={{
-                  color: "text.primary",
-                  lineHeight: 1.7,
-                  fontSize: { xs: "0.938rem", sm: "1rem" },
-                }}
-              >
-                Your weekly job search has been scheduled successfully! You'll
-                receive automated results at your specified time.
-              </Typography>
-            </Box>
+          <DialogContent sx={{ textAlign: "center", px: 4 }}>
+            <Typography variant="body1" sx={{ color: "#475569", lineHeight: 1.6 }}>
+              Your automated scraper is now registered. The background worker will run queries on your selected days/times and email fresh jobs.
+            </Typography>
           </DialogContent>
-          <DialogActions sx={{ p: 3, justifyContent: "center" }}>
+          <DialogActions sx={{ p: 3, pt: 1, justifyContent: "center" }}>
             <Button
               onClick={() => setOpenScheduleDialog(false)}
               variant="contained"
               sx={{
                 borderRadius: 2,
                 px: 4,
-                py: 1.5,
-                textTransform: "none",
+                py: 1,
                 fontWeight: 600,
-                backgroundColor: "#293548",
-                "&:hover": {
-                  backgroundColor: "#1e2836",
-                },
+                backgroundColor: "#0f172a",
               }}
             >
-              Perfect
+              Understood
             </Button>
           </DialogActions>
         </Dialog>
 
+        {/* Dialog: All Skills */}
         <Dialog
           open={openSkillsDialog}
           onClose={() => setOpenSkillsDialog(false)}
-          maxWidth="md"
+          maxWidth="sm"
           fullWidth
           PaperProps={{
             elevation: 0,
-            sx: {
-              borderRadius: 4,
-              background: "linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)",
-            },
+            sx: { borderRadius: 3.5, p: 1 },
           }}
         >
-          <DialogTitle
-            sx={{
-              background: "linear-gradient(135deg, #293548 0%, #3d4f66 100%)",
-              color: "white",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              fontWeight: 700,
-              fontSize: { xs: "1.25rem", sm: "1.5rem" },
-              py: 2.5,
-            }}
-          >
-            <Box display="flex" alignItems="center" gap={1}>
-              <StarIcon />
-              Required Skills
+          <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <Box>
+              <Typography variant="h6" sx={{ fontWeight: 700, color: "#0f172a" }}>
+                Identified Competencies & Skills
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {selectedJobTitle}
+              </Typography>
             </Box>
-            <IconButton
-              onClick={() => setOpenSkillsDialog(false)}
-              sx={{
-                color: "white",
-                "&:hover": {
-                  backgroundColor: "rgba(255,255,255,0.1)",
-                },
-              }}
-            >
+            <IconButton onClick={() => setOpenSkillsDialog(false)} size="small">
               <CloseIcon />
             </IconButton>
           </DialogTitle>
-          <DialogContent sx={{ p: { xs: 2, sm: 3 } }}>
-            <Grid container spacing={2} sx={{ mt: 0.5 }}>
+          <DialogContent dividers sx={{ borderColor: "#f1f5f9", py: 3 }}>
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
               {selectedSkills.map((skill, index) => (
-                <Grid item xs={12} sm={6} md={4} key={index}>
-                  <Paper
-                    elevation={0}
-                    sx={{
-                      p: 2,
-                      borderRadius: 2,
-                      border: "1px solid rgba(41, 53, 72, 0.15)",
-                      transition: "all 0.3s",
-                      "&:hover": {
-                        transform: "translateY(-2px)",
-                        boxShadow: "0 4px 12px rgba(41, 53, 72, 0.12)",
-                        borderColor: "#293548",
-                      },
-                    }}
-                  >
-                    <Stack direction="row" spacing={1.5} alignItems="center">
-                      <Avatar
-                        sx={{
-                          width: 36,
-                          height: 36,
-                          backgroundColor: "#293548",
-                          fontSize: "0.875rem",
-                          fontWeight: 600,
-                        }}
-                      >
-                        {skill.charAt(0).toUpperCase()}
-                      </Avatar>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          fontWeight: 600,
-                          color: "#293548",
-                          fontSize: { xs: "0.875rem", sm: "0.938rem" },
-                        }}
-                      >
-                        {skill}
-                      </Typography>
-                    </Stack>
-                  </Paper>
-                </Grid>
+                <Chip
+                  key={index}
+                  label={skill}
+                  sx={{
+                    backgroundColor: "#eff6ff",
+                    color: "#1d4ed8",
+                    fontWeight: 600,
+                    borderRadius: "16px",
+                    border: "1px solid #dbeafe",
+                  }}
+                />
               ))}
-            </Grid>
+            </Box>
           </DialogContent>
+          <DialogActions sx={{ p: 2 }}>
+            <Button onClick={() => setOpenSkillsDialog(false)} sx={{ fontWeight: 600 }}>
+              Close
+            </Button>
+          </DialogActions>
         </Dialog>
       </Container>
     </Box>
