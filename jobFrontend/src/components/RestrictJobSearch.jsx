@@ -394,87 +394,93 @@ function RestrictJobSearch() {
         </Stack>
       </Paper>
 
-      {/* Search Parameter Card - Full Width */}
+      {/* Search Parameter Card - Full Width with Responsive CSS Grid */}
       <Paper
         elevation={0}
         sx={{
-          p: { xs: 2.5, sm: 3.5 },
+          p: { xs: 2.5, sm: 3 },
           mb: 4,
           borderRadius: 3.5,
           backgroundColor: '#ffffff',
           border: '1px solid #e2e8f0',
         }}
       >
-        <Grid container spacing={2.5} alignItems="center">
-          <Grid item xs={12} sm={5} md={5}>
-            <TextField
-              label="Role Keywords"
-              placeholder="e.g. Lead Frontend Engineer, Staff DevOps"
-              value={keywords}
-              onChange={(e) => setKeywords(e.target.value)}
-              fullWidth
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon sx={{ color: '#94a3b8' }} />
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </Grid>
-          <Grid item xs={12} sm={4} md={4}>
-            <TextField
-              label="Geographic Location"
-              placeholder="e.g. San Francisco, CA or Remote"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              fullWidth
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <LocationIcon sx={{ color: '#94a3b8' }} />
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </Grid>
-          <Grid item xs={12} sm={3} md={1.5}>
-            <TextField
-              label="Limit"
-              type="number"
-              value={jobLimit}
-              onChange={(e) => setJobLimit(Math.max(1, Math.min(200, Number(e.target.value))))}
-              fullWidth
-              inputProps={{ min: 1, max: 200 }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <NumbersIcon sx={{ color: '#94a3b8', fontSize: 18 }} />
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </Grid>
-          <Grid item xs={12} sm={12} md={1.5}>
-            <Button
-              variant="contained"
-              onClick={handleSearch}
-              disabled={loading || !keywords || !location}
-              fullWidth
-              sx={{
-                height: '52px',
-                borderRadius: 2.5,
-                fontWeight: 700,
-                fontSize: '0.95rem',
-                backgroundColor: '#2563eb',
-                boxShadow: '0 4px 14px rgba(37, 99, 235, 0.25)',
-                '&:hover': { backgroundColor: '#1d4ed8' },
-              }}
-            >
-              {loading ? <CircularProgress size={22} color="inherit" /> : 'Filter Jobs'}
-            </Button>
-          </Grid>
-        </Grid>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: '1fr',
+              sm: 'repeat(2, 1fr)',
+              md: '1.4fr 1.2fr 0.7fr 140px',
+            },
+            gap: 2,
+            alignItems: 'center',
+          }}
+        >
+          <TextField
+            label="Role Keywords"
+            placeholder="e.g. Lead Frontend Engineer, Staff DevOps"
+            value={keywords}
+            onChange={(e) => setKeywords(e.target.value)}
+            fullWidth
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon sx={{ color: '#94a3b8' }} />
+                </InputAdornment>
+              ),
+            }}
+          />
+
+          <TextField
+            label="Geographic Location"
+            placeholder="e.g. San Francisco, CA or Remote"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            fullWidth
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <LocationIcon sx={{ color: '#94a3b8' }} />
+                </InputAdornment>
+              ),
+            }}
+          />
+
+          <TextField
+            label="Limit"
+            type="number"
+            value={jobLimit}
+            onChange={(e) => setJobLimit(Math.max(1, Math.min(200, Number(e.target.value))))}
+            fullWidth
+            inputProps={{ min: 1, max: 200 }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <NumbersIcon sx={{ color: '#94a3b8', fontSize: 18 }} />
+                </InputAdornment>
+              ),
+            }}
+          />
+
+          <Button
+            variant="contained"
+            onClick={handleSearch}
+            disabled={loading || !keywords || !location}
+            fullWidth
+            sx={{
+              height: '52px',
+              borderRadius: 2.5,
+              fontWeight: 700,
+              fontSize: '0.95rem',
+              backgroundColor: '#2563eb',
+              boxShadow: '0 4px 14px rgba(37, 99, 235, 0.25)',
+              '&:hover': { backgroundColor: '#1d4ed8' },
+            }}
+          >
+            {loading ? <CircularProgress size={22} color="inherit" /> : 'Filter Jobs'}
+          </Button>
+        </Box>
       </Paper>
 
       {error && (
@@ -519,25 +525,43 @@ function RestrictJobSearch() {
         </Box>
       )}
 
-      {/* Job Cards Grid */}
+      {/* Job Cards Grid with Responsive CSS Grid */}
       {jobs.length > 0 && (
-        <Grid container spacing={3}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: '1fr',
+              sm: 'repeat(2, 1fr)',
+              md: 'repeat(2, 1fr)',
+              lg: 'repeat(3, 1fr)',
+            },
+            gap: 3,
+          }}
+        >
           {jobs.map((job) => (
-            <Grid item xs={12} sm={6} lg={4} key={job.id}>
-              <JobCard job={job} />
-            </Grid>
+            <JobCard job={job} key={job.id} />
           ))}
-        </Grid>
+        </Box>
       )}
 
       {loading && (
-        <Grid container spacing={3}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: '1fr',
+              sm: 'repeat(2, 1fr)',
+              md: 'repeat(2, 1fr)',
+              lg: 'repeat(3, 1fr)',
+            },
+            gap: 3,
+          }}
+        >
           {Array.from({ length: 6 }).map((_, index) => (
-            <Grid item xs={12} sm={6} lg={4} key={index}>
-              <JobSkeleton />
-            </Grid>
+            <JobSkeleton key={index} />
           ))}
-        </Grid>
+        </Box>
       )}
 
       {/* When no jobs yet: Suggested Presets & Scraper Feature Overview (COVERS COMPLETE SPACE) */}
@@ -552,98 +576,111 @@ function RestrictJobSearch() {
             </Typography>
           </Box>
 
-          <Grid container spacing={2.5} mb={4}>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: {
+                xs: '1fr',
+                sm: 'repeat(2, 1fr)',
+                md: 'repeat(3, 1fr)',
+              },
+              gap: 2.5,
+              mb: 4,
+            }}
+          >
             {quickPresets.map((preset, idx) => (
-              <Grid item xs={12} sm={6} md={4} key={idx}>
-                <Card
-                  elevation={0}
-                  sx={{
-                    p: 2.5,
-                    borderRadius: 3,
-                    border: '1px solid #e2e8f0',
-                    backgroundColor: '#ffffff',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    '&:hover': {
-                      transform: 'translateY(-3px)',
-                      borderColor: '#2563eb',
-                      boxShadow: '0 8px 20px rgba(37, 99, 235, 0.08)',
-                    },
-                  }}
-                  onClick={() => handleApplyPreset(preset)}
+              <Card
+                key={idx}
+                elevation={0}
+                sx={{
+                  p: 2.5,
+                  borderRadius: 3,
+                  border: '1px solid #e2e8f0',
+                  backgroundColor: '#ffffff',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    transform: 'translateY(-3px)',
+                    borderColor: '#2563eb',
+                    boxShadow: '0 8px 20px rgba(37, 99, 235, 0.08)',
+                  },
+                }}
+                onClick={() => handleApplyPreset(preset)}
+              >
+                <Stack direction="row" spacing={1.5} alignItems="center" mb={1.5}>
+                  <Avatar sx={{ width: 34, height: 34, bgcolor: '#eff6ff', color: '#2563eb' }}>
+                    <BoltIcon fontSize="small" />
+                  </Avatar>
+                  <Typography variant="subtitle2" fontWeight={700} color="#0f172a">
+                    {preset.title}
+                  </Typography>
+                </Stack>
+                <Stack spacing={0.75}>
+                  <Typography variant="caption" color="#475569">
+                    <strong>Keywords:</strong> {preset.kw}
+                  </Typography>
+                  <Typography variant="caption" color="#64748b">
+                    <strong>Location:</strong> {preset.loc} • <strong>Limit:</strong> {preset.limit}
+                  </Typography>
+                </Stack>
+                <Button
+                  size="small"
+                  variant="text"
+                  sx={{ p: 0, mt: 1.5, fontSize: '0.8rem', fontWeight: 600, color: '#2563eb' }}
                 >
-                  <Stack direction="row" spacing={1.5} alignItems="center" mb={1.5}>
-                    <Avatar sx={{ width: 34, height: 34, bgcolor: '#eff6ff', color: '#2563eb' }}>
-                      <BoltIcon fontSize="small" />
-                    </Avatar>
-                    <Typography variant="subtitle2" fontWeight={700} color="#0f172a">
-                      {preset.title}
-                    </Typography>
-                  </Stack>
-                  <Stack spacing={0.75}>
-                    <Typography variant="caption" color="#475569">
-                      <strong>Keywords:</strong> {preset.kw}
-                    </Typography>
-                    <Typography variant="caption" color="#64748b">
-                      <strong>Location:</strong> {preset.loc} • <strong>Limit:</strong> {preset.limit}
-                    </Typography>
-                  </Stack>
-                  <Button
-                    size="small"
-                    variant="text"
-                    sx={{ p: 0, mt: 1.5, fontSize: '0.8rem', fontWeight: 600, color: '#2563eb' }}
-                  >
-                    Apply Template &rarr;
-                  </Button>
-                </Card>
-              </Grid>
+                  Apply Template &rarr;
+                </Button>
+              </Card>
             ))}
-          </Grid>
+          </Box>
 
           {/* Engine Highlights Cards */}
-          <Grid container spacing={2.5}>
-            <Grid item xs={12} md={4}>
-              <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: '1px solid #e2e8f0', bgcolor: '#ffffff' }}>
-                <Avatar sx={{ width: 40, height: 40, bgcolor: '#ecfdf5', color: '#10b981', mb: 1.5 }}>
-                  <SpeedIcon />
-                </Avatar>
-                <Typography variant="subtitle1" fontWeight={700} color="#0f172a" mb={0.5}>
-                  Instant Extraction Engine
-                </Typography>
-                <Typography variant="body2" color="#64748b">
-                  Extracts live posting titles, company data, and locations directly through high-speed scraping endpoints.
-                </Typography>
-              </Paper>
-            </Grid>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: {
+                xs: '1fr',
+                md: 'repeat(3, 1fr)',
+              },
+              gap: 2.5,
+            }}
+          >
+            <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: '1px solid #e2e8f0', bgcolor: '#ffffff' }}>
+              <Avatar sx={{ width: 40, height: 40, bgcolor: '#ecfdf5', color: '#10b981', mb: 1.5 }}>
+                <SpeedIcon />
+              </Avatar>
+              <Typography variant="subtitle1" fontWeight={700} color="#0f172a" mb={0.5}>
+                Instant Extraction Engine
+              </Typography>
+              <Typography variant="body2" color="#64748b">
+                Extracts live posting titles, company data, and locations directly through high-speed scraping endpoints.
+              </Typography>
+            </Paper>
 
-            <Grid item xs={12} md={4}>
-              <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: '1px solid #e2e8f0', bgcolor: '#ffffff' }}>
-                <Avatar sx={{ width: 40, height: 40, bgcolor: '#eff6ff', color: '#2563eb', mb: 1.5 }}>
-                  <ShieldIcon />
-                </Avatar>
-                <Typography variant="subtitle1" fontWeight={700} color="#0f172a" mb={0.5}>
-                  No Account Credentials Required
-                </Typography>
-                <Typography variant="body2" color="#64748b">
-                  Scrapes publicly available postings securely without exposing personal account sessions.
-                </Typography>
-              </Paper>
-            </Grid>
+            <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: '1px solid #e2e8f0', bgcolor: '#ffffff' }}>
+              <Avatar sx={{ width: 40, height: 40, bgcolor: '#eff6ff', color: '#2563eb', mb: 1.5 }}>
+                <ShieldIcon />
+              </Avatar>
+              <Typography variant="subtitle1" fontWeight={700} color="#0f172a" mb={0.5}>
+                No Account Credentials Required
+              </Typography>
+              <Typography variant="body2" color="#64748b">
+                Scrapes publicly available postings securely without exposing personal account sessions.
+              </Typography>
+            </Paper>
 
-            <Grid item xs={12} md={4}>
-              <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: '1px solid #e2e8f0', bgcolor: '#ffffff' }}>
-                <Avatar sx={{ width: 40, height: 40, bgcolor: '#fef3c7', color: '#d97706', mb: 1.5 }}>
-                  <DownloadIcon />
-                </Avatar>
-                <Typography variant="subtitle1" fontWeight={700} color="#0f172a" mb={0.5}>
-                  Automated Spreadsheet Export
-                </Typography>
-                <Typography variant="body2" color="#64748b">
-                  Generate comprehensive multi-column Excel workbooks ready for applicant tracking and recruiter CRM import.
-                </Typography>
-              </Paper>
-            </Grid>
-          </Grid>
+            <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: '1px solid #e2e8f0', bgcolor: '#ffffff' }}>
+              <Avatar sx={{ width: 40, height: 40, bgcolor: '#fef3c7', color: '#d97706', mb: 1.5 }}>
+                <DownloadIcon />
+              </Avatar>
+              <Typography variant="subtitle1" fontWeight={700} color="#0f172a" mb={0.5}>
+                Automated Spreadsheet Export
+              </Typography>
+              <Typography variant="body2" color="#64748b">
+                Generate comprehensive multi-column Excel workbooks ready for applicant tracking and recruiter CRM import.
+              </Typography>
+            </Paper>
+          </Box>
         </Box>
       )}
 

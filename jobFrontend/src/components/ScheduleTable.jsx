@@ -165,176 +165,184 @@ const ScheduleTable = ({ schedules, onUpdate, onDelete }) => {
               {isEditing(schedule.id) ? (
                 /* EDIT MODE */
                 <Box sx={{ p: { xs: 2.5, sm: 3.5 }, backgroundColor: "#f8fafc" }}>
-                  <Grid container spacing={2}>
-                    <Grid item xs={12} sm={6} md={3}>
-                      <TextField
-                        label="Keywords"
-                        value={formData.keywords || ""}
-                        onChange={(e) => setFormData({ ...formData, keywords: e.target.value })}
-                        fullWidth
-                        size="small"
-                        InputProps={{ startAdornment: <SearchIcon sx={{ color: "#94a3b8", mr: 1, fontSize: 18 }} /> }}
-                      />
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                      <TextField
-                        label="Location"
-                        value={formData.location || ""}
-                        onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                        fullWidth
-                        size="small"
-                        InputProps={{ startAdornment: <LocationIcon sx={{ color: "#94a3b8", mr: 1, fontSize: 18 }} /> }}
-                      />
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                      <TextField
-                        label="Email"
-                        value={formData.email || ""}
-                        disabled
-                        fullWidth
-                        size="small"
-                        InputProps={{ startAdornment: <EmailIcon sx={{ color: "#94a3b8", mr: 1, fontSize: 18 }} /> }}
-                      />
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                      <TextField
-                        label="Job Limit"
-                        type="number"
-                        value={formData.job_limit || ""}
-                        onChange={(e) => setFormData({ ...formData, job_limit: Number(e.target.value) })}
-                        fullWidth
-                        size="small"
-                        inputProps={{ min: 1, max: 200 }}
-                        InputProps={{ startAdornment: <NumbersIcon sx={{ color: "#94a3b8", mr: 1, fontSize: 18 }} /> }}
-                      />
-                    </Grid>
+                  <Box
+                    sx={{
+                      display: "grid",
+                      gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", md: "repeat(4, 1fr)" },
+                      gap: 2,
+                      mb: 2,
+                    }}
+                  >
+                    <TextField
+                      label="Keywords"
+                      value={formData.keywords || ""}
+                      onChange={(e) => setFormData({ ...formData, keywords: e.target.value })}
+                      fullWidth
+                      size="small"
+                      InputProps={{ startAdornment: <SearchIcon sx={{ color: "#94a3b8", mr: 1, fontSize: 18 }} /> }}
+                    />
+                    <TextField
+                      label="Location"
+                      value={formData.location || ""}
+                      onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                      fullWidth
+                      size="small"
+                      InputProps={{ startAdornment: <LocationIcon sx={{ color: "#94a3b8", mr: 1, fontSize: 18 }} /> }}
+                    />
+                    <TextField
+                      label="Email"
+                      value={formData.email || ""}
+                      disabled
+                      fullWidth
+                      size="small"
+                      InputProps={{ startAdornment: <EmailIcon sx={{ color: "#94a3b8", mr: 1, fontSize: 18 }} /> }}
+                    />
+                    <TextField
+                      label="Job Limit"
+                      type="number"
+                      value={formData.job_limit || ""}
+                      onChange={(e) => setFormData({ ...formData, job_limit: Number(e.target.value) })}
+                      fullWidth
+                      size="small"
+                      inputProps={{ min: 1, max: 200 }}
+                      InputProps={{ startAdornment: <NumbersIcon sx={{ color: "#94a3b8", mr: 1, fontSize: 18 }} /> }}
+                    />
+                  </Box>
 
-                    <Grid item xs={12}>
-                      <Typography sx={{ fontWeight: 600, mb: 1, color: "#1e293b", fontSize: "0.85rem" }}>
-                        Execution Day
-                      </Typography>
-                      <ToggleButtonGroup
-                        exclusive
-                        fullWidth
-                        value={formData.day || ""}
-                        onChange={(_, v) => v && setFormData({ ...formData, day: v })}
-                        sx={{
-                          gap: 0.5,
-                          "& .MuiToggleButton-root": {
-                            borderRadius: "8px !important",
-                            border: "1px solid #e2e8f0 !important",
-                            textTransform: "none",
-                            fontWeight: 600,
-                            py: 0.75,
-                            "&.Mui-selected": {
-                              backgroundColor: "#2563eb !important",
-                              color: "white !important",
-                            },
+                  <Box sx={{ mb: 2 }}>
+                    <Typography sx={{ fontWeight: 600, mb: 1, color: "#1e293b", fontSize: "0.85rem" }}>
+                      Execution Day
+                    </Typography>
+                    <ToggleButtonGroup
+                      exclusive
+                      fullWidth
+                      value={formData.day || ""}
+                      onChange={(_, v) => v && setFormData({ ...formData, day: v })}
+                      sx={{
+                        gap: 0.5,
+                        "& .MuiToggleButton-root": {
+                          borderRadius: "8px !important",
+                          border: "1px solid #e2e8f0 !important",
+                          textTransform: "none",
+                          fontWeight: 600,
+                          py: 0.75,
+                          "&.Mui-selected": {
+                            backgroundColor: "#2563eb !important",
+                            color: "white !important",
                           },
+                        },
+                      }}
+                    >
+                      {daysOfWeek.map((d) => (
+                        <ToggleButton key={d} value={d}>
+                          {isMobile ? d.slice(0, 3) : d}
+                        </ToggleButton>
+                      ))}
+                    </ToggleButtonGroup>
+                  </Box>
+
+                  <Box sx={{ mb: 2 }}>
+                    <Typography sx={{ fontWeight: 600, mb: 1, color: "#1e293b", fontSize: "0.85rem" }}>
+                      Execution Time (24h)
+                    </Typography>
+                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75 }}>
+                      {timeSlots.map((t) => (
+                        <Chip
+                          key={t}
+                          label={t}
+                          clickable
+                          onClick={() => setFormData({ ...formData, time: t })}
+                          sx={{
+                            backgroundColor: formData.time === t ? "#2563eb" : "#ffffff",
+                            color: formData.time === t ? "#ffffff" : "#475569",
+                            border: "1px solid",
+                            borderColor: formData.time === t ? "#2563eb" : "#cbd5e1",
+                            fontWeight: 600,
+                            height: 30,
+                          }}
+                        />
+                      ))}
+                    </Box>
+                  </Box>
+
+                  <Box>
+                    <Stack direction="row" spacing={1.5} justifyContent="flex-end" sx={{ mt: 1 }}>
+                      <Button onClick={cancelEdit} disabled={saving} sx={{ textTransform: "none", fontWeight: 600 }}>
+                        Cancel
+                      </Button>
+                      <Button
+                        variant="contained"
+                        onClick={saveEdit}
+                        disabled={saving}
+                        startIcon={saving ? <CircularProgress size={18} color="inherit" /> : <CheckIcon fontSize="small" />}
+                        sx={{
+                          backgroundColor: "#2563eb",
+                          fontWeight: 600,
+                          textTransform: "none",
+                          "&:hover": { backgroundColor: "#1d4ed8" },
                         }}
                       >
-                        {daysOfWeek.map((d) => (
-                          <ToggleButton key={d} value={d}>
-                            {isMobile ? d.slice(0, 3) : d}
-                          </ToggleButton>
-                        ))}
-                      </ToggleButtonGroup>
-                    </Grid>
-
-                    <Grid item xs={12}>
-                      <Typography sx={{ fontWeight: 600, mb: 1, color: "#1e293b", fontSize: "0.85rem" }}>
-                        Execution Time (24h)
-                      </Typography>
-                      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75 }}>
-                        {timeSlots.map((t) => (
-                          <Chip
-                            key={t}
-                            label={t}
-                            clickable
-                            onClick={() => setFormData({ ...formData, time: t })}
-                            sx={{
-                              backgroundColor: formData.time === t ? "#2563eb" : "#ffffff",
-                              color: formData.time === t ? "#ffffff" : "#475569",
-                              border: "1px solid",
-                              borderColor: formData.time === t ? "#2563eb" : "#cbd5e1",
-                              fontWeight: 600,
-                              height: 30,
-                            }}
-                          />
-                        ))}
-                      </Box>
-                    </Grid>
-
-                    <Grid item xs={12}>
-                      <Stack direction="row" spacing={1.5} justifyContent="flex-end" sx={{ mt: 1 }}>
-                        <Button onClick={cancelEdit} disabled={saving} sx={{ textTransform: "none", fontWeight: 600 }}>
-                          Cancel
-                        </Button>
-                        <Button
-                          variant="contained"
-                          onClick={saveEdit}
-                          disabled={saving}
-                          startIcon={saving ? <CircularProgress size={18} color="inherit" /> : <CheckIcon fontSize="small" />}
-                          sx={{
-                            backgroundColor: "#2563eb",
-                            fontWeight: 600,
-                            textTransform: "none",
-                            "&:hover": { backgroundColor: "#1d4ed8" },
-                          }}
-                        >
-                          {saving ? "Saving..." : "Save Changes"}
-                        </Button>
-                      </Stack>
-                    </Grid>
-                  </Grid>
+                        {saving ? "Saving..." : "Save Changes"}
+                      </Button>
+                    </Stack>
+                  </Box>
                 </Box>
               ) : (
                 /* VIEW MODE */
                 <Box sx={{ p: { xs: 2, sm: 2.5 } }}>
-                  <Grid container alignItems="center" spacing={2}>
-                    <Grid item xs={12} sm={4} md={3}>
+                  <Box
+                    sx={{
+                      display: "grid",
+                      gridTemplateColumns: {
+                        xs: "1fr",
+                        sm: "1.5fr 1fr 100px",
+                        md: "1.8fr 1.4fr 110px 100px 90px 90px",
+                      },
+                      alignItems: "center",
+                      gap: 2,
+                    }}
+                  >
+                    <Box>
                       <Typography sx={{ fontWeight: 700, color: "#0f172a", fontSize: "0.95rem" }} noWrap>
                         {schedule.keywords}
                       </Typography>
                       <Typography variant="caption" sx={{ color: "#64748b" }}>
                         {schedule.email}
                       </Typography>
-                    </Grid>
+                    </Box>
 
-                    <Grid item xs={6} sm={3} md={2.5}>
+                    <Box>
                       <Stack direction="row" spacing={0.75} alignItems="center">
                         <LocationIcon sx={{ fontSize: 16, color: "#64748b" }} />
                         <Typography variant="body2" sx={{ color: "#475569", fontWeight: 500 }} noWrap>
                           {schedule.location}
                         </Typography>
                       </Stack>
-                    </Grid>
+                    </Box>
 
-                    <Grid item xs={6} sm={2} md={2}>
-                      <Stack direction="row" spacing={1} alignItems="center">
-                        <Chip
-                          label={schedule.day}
-                          size="small"
-                          sx={{
-                            backgroundColor: "#eff6ff",
-                            color: "#1d4ed8",
-                            fontWeight: 600,
-                            border: "1px solid #bfdbfe",
-                          }}
-                        />
-                      </Stack>
-                    </Grid>
+                    <Box>
+                      <Chip
+                        label={schedule.day}
+                        size="small"
+                        sx={{
+                          backgroundColor: "#eff6ff",
+                          color: "#1d4ed8",
+                          fontWeight: 600,
+                          border: "1px solid #bfdbfe",
+                        }}
+                      />
+                    </Box>
 
-                    <Grid item xs={6} sm={2} md={1.5}>
+                    <Box>
                       <Stack direction="row" spacing={0.75} alignItems="center">
                         <TimeIcon sx={{ fontSize: 16, color: "#64748b" }} />
                         <Typography variant="body2" sx={{ color: "#475569", fontWeight: 600 }}>
                           {schedule.time ? schedule.time.slice(0, 5) : "--:--"}
                         </Typography>
                       </Stack>
-                    </Grid>
+                    </Box>
 
-                    <Grid item xs={6} sm={1} md={1}>
+                    <Box>
                       <Chip
                         label={`${schedule.job_limit} jobs`}
                         size="small"
@@ -344,9 +352,9 @@ const ScheduleTable = ({ schedules, onUpdate, onDelete }) => {
                           fontWeight: 600,
                         }}
                       />
-                    </Grid>
+                    </Box>
 
-                    <Grid item xs={12} sm={12} md={2} sx={{ textAlign: { xs: "left", md: "right" } }}>
+                    <Box sx={{ textAlign: { xs: "left", md: "right" } }}>
                       <Stack direction="row" spacing={1} justifyContent={{ xs: "flex-start", md: "flex-end" }}>
                         <Tooltip title="Edit schedule">
                           <IconButton
@@ -377,8 +385,8 @@ const ScheduleTable = ({ schedules, onUpdate, onDelete }) => {
                           </IconButton>
                         </Tooltip>
                       </Stack>
-                    </Grid>
-                  </Grid>
+                    </Box>
+                  </Box>
                 </Box>
               )}
             </Box>

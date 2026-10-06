@@ -443,82 +443,85 @@ function SavedJobSearch() {
           <Tab label="All Scraped History" />
         </Tabs>
 
-        <Grid container spacing={2.5} alignItems="center">
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: tabValue === 0
+              ? { xs: "1fr", sm: "1fr 1fr", md: jobs.length > 0 ? "1.3fr 1.1fr 140px 150px" : "1.3fr 1.1fr 160px" }
+              : { xs: "1fr", sm: jobs.length > 0 ? "200px 160px" : "200px" },
+            gap: 2.5,
+            alignItems: "center",
+          }}
+        >
           {tabValue === 0 && (
             <>
-              <Grid item xs={12} sm={5} md={4}>
-                <TextField
-                  label="Search Postings"
-                  placeholder="Role keywords..."
-                  value={keywords}
-                  onChange={(e) => setKeywords(e.target.value)}
-                  fullWidth
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <SearchIcon sx={{ color: "#94a3b8" }} />
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12} sm={4} md={4}>
-                <TextField
-                  label="Location"
-                  placeholder="Location filter..."
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  fullWidth
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <LocationIcon sx={{ color: "#94a3b8" }} />
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-              </Grid>
+              <TextField
+                label="Search Postings"
+                placeholder="Role keywords..."
+                value={keywords}
+                onChange={(e) => setKeywords(e.target.value)}
+                fullWidth
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon sx={{ color: "#94a3b8" }} />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+              <TextField
+                label="Location"
+                placeholder="Location filter..."
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                fullWidth
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <LocationIcon sx={{ color: "#94a3b8" }} />
+                    </InputAdornment>
+                  ),
+                }}
+              />
             </>
           )}
 
-          <Grid item xs={12} sm={tabValue === 0 ? 3 : 4} md={tabValue === 0 ? 2 : 3}>
-            <FormControl fullWidth>
-              <InputLabel id="page-size-label">Per Page</InputLabel>
-              <Select
-                labelId="page-size-label"
-                value={pageSize}
-                onChange={handlePageSizeChange}
-                label="Per Page"
-              >
-                <MenuItem value={6}>6 jobs</MenuItem>
-                <MenuItem value={12}>12 jobs</MenuItem>
-                <MenuItem value={24}>24 jobs</MenuItem>
-                <MenuItem value={48}>48 jobs</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
+          <FormControl fullWidth>
+            <InputLabel id="page-size-label">Per Page</InputLabel>
+            <Select
+              labelId="page-size-label"
+              value={pageSize}
+              onChange={handlePageSizeChange}
+              label="Per Page"
+            >
+              <MenuItem value={6}>6 jobs</MenuItem>
+              <MenuItem value={12}>12 jobs</MenuItem>
+              <MenuItem value={24}>24 jobs</MenuItem>
+              <MenuItem value={48}>48 jobs</MenuItem>
+            </Select>
+          </FormControl>
 
           {jobs.length > 0 && (
-            <Grid item xs={12} sm={12} md={tabValue === 0 ? 2 : 3} sx={{ textAlign: { md: "right" } }}>
-              <Button
-                variant="outlined"
-                onClick={handleDownload}
-                disabled={downloading}
-                startIcon={downloading ? <CircularProgress size={16} /> : <DownloadIcon />}
-                sx={{
-                  textTransform: "none",
-                  fontWeight: 600,
-                  borderRadius: 2,
-                  borderColor: "#cbd5e1",
-                  color: "#334155",
-                  "&:hover": { borderColor: "#2563eb", color: "#2563eb", backgroundColor: "#eff6ff" },
-                }}
-              >
-                Export Excel
-              </Button>
-            </Grid>
+            <Button
+              variant="outlined"
+              onClick={handleDownload}
+              disabled={downloading}
+              startIcon={downloading ? <CircularProgress size={16} /> : <DownloadIcon />}
+              fullWidth
+              sx={{
+                height: "52px",
+                textTransform: "none",
+                fontWeight: 600,
+                borderRadius: 2,
+                borderColor: "#cbd5e1",
+                color: "#334155",
+                "&:hover": { borderColor: "#2563eb", color: "#2563eb", backgroundColor: "#eff6ff" },
+              }}
+            >
+              Export Excel
+            </Button>
           )}
-        </Grid>
+        </Box>
       </Paper>
 
       {error && (
@@ -532,20 +535,26 @@ function SavedJobSearch() {
         </Alert>
       )}
 
-      {/* Jobs Grid */}
-      <Grid container spacing={3}>
+      {/* Jobs Grid - 3 cols desktop, 2 cols tablet, 1 col mobile */}
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: {
+            xs: "1fr",
+            sm: "repeat(2, 1fr)",
+            lg: "repeat(3, 1fr)",
+          },
+          gap: 3,
+        }}
+      >
         {loading
           ? Array.from({ length: pageSize }).map((_, index) => (
-              <Grid item xs={12} sm={6} lg={4} key={index}>
-                <JobSkeleton />
-              </Grid>
+              <JobSkeleton key={index} />
             ))
           : jobs.map((job) => (
-              <Grid item xs={12} sm={6} lg={4} key={job.id}>
-                <JobCard job={job} />
-              </Grid>
+              <JobCard job={job} key={job.id} />
             ))}
-      </Grid>
+      </Box>
 
       {/* Clean Empty State */}
       {!loading && jobs.length === 0 && !error && (

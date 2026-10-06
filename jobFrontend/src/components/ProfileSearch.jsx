@@ -312,77 +312,76 @@ const ProfileSearch = () => {
           border: "1px solid #e2e8f0",
         }}
       >
-        <Box component="form" onSubmit={handleSearch}>
-          <Grid container spacing={2.5} alignItems="center">
-            <Grid item xs={12} sm={5} md={5}>
-              <TextField
-                label="Keywords / Name / Title"
-                placeholder="e.g. Technical Recruiter, VP Engineering"
-                value={keywords}
-                onChange={(e) => setKeywords(e.target.value)}
-                required
-                fullWidth
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon sx={{ color: "#94a3b8" }} />
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={4} md={4}>
-              <TextField
-                label="Target Location"
-                placeholder="e.g. Toronto, Seattle, Remote"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                fullWidth
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <LocationIcon sx={{ color: "#94a3b8" }} />
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={3} md={1.5}>
-              <TextField
-                label="Max Pages"
-                type="number"
-                value={maxPages}
-                onChange={(e) => setMaxPages(Math.max(1, Math.min(10, Number(e.target.value))))}
-                fullWidth
-                inputProps={{ min: 1, max: 10 }}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <NumbersIcon sx={{ color: "#94a3b8", fontSize: 18 }} />
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={12} md={1.5}>
-              <Button
-                type="submit"
-                variant="contained"
-                fullWidth
-                disabled={loading || !keywords}
-                sx={{
-                  height: '52px',
-                  borderRadius: 2.5,
-                  fontWeight: 700,
-                  backgroundColor: "#2563eb",
-                  boxShadow: "0 4px 14px rgba(37, 99, 235, 0.25)",
-                  "&:hover": { backgroundColor: "#1d4ed8" },
-                }}
-              >
-                {loading ? <CircularProgress size={22} color="inherit" /> : 'Search'}
-              </Button>
-            </Grid>
-          </Grid>
+        <Box
+          component="form"
+          onSubmit={handleSearch}
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "1.4fr 1.2fr 130px 140px" },
+            gap: 2.5,
+            alignItems: "center",
+          }}
+        >
+          <TextField
+            label="Keywords / Name / Title"
+            placeholder="e.g. Technical Recruiter, VP Engineering"
+            value={keywords}
+            onChange={(e) => setKeywords(e.target.value)}
+            required
+            fullWidth
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon sx={{ color: "#94a3b8" }} />
+                </InputAdornment>
+              ),
+            }}
+          />
+          <TextField
+            label="Target Location"
+            placeholder="e.g. Toronto, Seattle, Remote"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            fullWidth
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <LocationIcon sx={{ color: "#94a3b8" }} />
+                </InputAdornment>
+              ),
+            }}
+          />
+          <TextField
+            label="Max Pages"
+            type="number"
+            value={maxPages}
+            onChange={(e) => setMaxPages(Math.max(1, Math.min(10, Number(e.target.value))))}
+            fullWidth
+            inputProps={{ min: 1, max: 10 }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <NumbersIcon sx={{ color: "#94a3b8", fontSize: 18 }} />
+                </InputAdornment>
+              ),
+            }}
+          />
+          <Button
+            type="submit"
+            variant="contained"
+            fullWidth
+            disabled={loading || !keywords}
+            sx={{
+              height: '52px',
+              borderRadius: 2.5,
+              fontWeight: 700,
+              backgroundColor: "#2563eb",
+              boxShadow: "0 4px 14px rgba(37, 99, 235, 0.25)",
+              "&:hover": { backgroundColor: "#1d4ed8" },
+            }}
+          >
+            {loading ? <CircularProgress size={22} color="inherit" /> : 'Search'}
+          </Button>
         </Box>
       </Paper>
 
@@ -434,25 +433,33 @@ const ProfileSearch = () => {
         </Alert>
       )}
 
-      {/* Profile Results Grid */}
+      {/* Profile Results Grid - 2 cols desktop, 1 col mobile */}
       {profiles.length > 0 && (
-        <Grid container spacing={2.5}>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)" },
+            gap: 2.5,
+          }}
+        >
           {profiles.map((profile, index) => (
-            <Grid item xs={12} key={index}>
-              <ProfileCard profile={profile} />
-            </Grid>
+            <ProfileCard profile={profile} key={index} />
           ))}
-        </Grid>
+        </Box>
       )}
 
       {loading && (
-        <Grid container spacing={2.5}>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)" },
+            gap: 2.5,
+          }}
+        >
           {Array.from({ length: 6 }).map((_, index) => (
-            <Grid item xs={12} key={index}>
-              <ProfileSkeleton />
-            </Grid>
+            <ProfileSkeleton key={index} />
           ))}
-        </Grid>
+        </Box>
       )}
 
       {/* Suggested Talent Templates when no profiles searched yet (COVERS COMPLETE SPACE) */}
@@ -467,51 +474,57 @@ const ProfileSearch = () => {
             </Typography>
           </Box>
 
-          <Grid container spacing={2.5} mb={4}>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)" },
+              gap: 2.5,
+              mb: 4,
+            }}
+          >
             {talentPresets.map((preset, idx) => (
-              <Grid item xs={12} sm={6} md={4} key={idx}>
-                <Card
-                  elevation={0}
-                  sx={{
-                    p: 2.5,
-                    borderRadius: 3,
-                    border: '1px solid #e2e8f0',
-                    backgroundColor: '#ffffff',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    '&:hover': {
-                      transform: 'translateY(-3px)',
-                      borderColor: '#2563eb',
-                      boxShadow: '0 8px 20px rgba(37, 99, 235, 0.08)',
-                    },
-                  }}
-                  onClick={() => handleApplyPreset(preset)}
+              <Card
+                key={idx}
+                elevation={0}
+                sx={{
+                  p: 2.5,
+                  borderRadius: 3,
+                  border: '1px solid #e2e8f0',
+                  backgroundColor: '#ffffff',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    transform: 'translateY(-3px)',
+                    borderColor: '#2563eb',
+                    boxShadow: '0 8px 20px rgba(37, 99, 235, 0.08)',
+                  },
+                }}
+                onClick={() => handleApplyPreset(preset)}
+              >
+                <Stack direction="row" spacing={1.5} alignItems="center" mb={1.5}>
+                  <Avatar sx={{ width: 34, height: 34, bgcolor: '#eff6ff', color: '#2563eb' }}>
+                    <BoltIcon fontSize="small" />
+                  </Avatar>
+                  <Typography variant="subtitle2" fontWeight={700} color="#0f172a">
+                    {preset.title}
+                  </Typography>
+                </Stack>
+                <Typography variant="caption" color="#475569" display="block">
+                  <strong>Search Term:</strong> {preset.kw}
+                </Typography>
+                <Typography variant="caption" color="#64748b" display="block" sx={{ mb: 1.5 }}>
+                  <strong>Region:</strong> {preset.loc}
+                </Typography>
+                <Button
+                  size="small"
+                  variant="text"
+                  sx={{ p: 0, fontSize: '0.8rem', fontWeight: 600, color: '#2563eb' }}
                 >
-                  <Stack direction="row" spacing={1.5} alignItems="center" mb={1.5}>
-                    <Avatar sx={{ width: 34, height: 34, bgcolor: '#eff6ff', color: '#2563eb' }}>
-                      <BoltIcon fontSize="small" />
-                    </Avatar>
-                    <Typography variant="subtitle2" fontWeight={700} color="#0f172a">
-                      {preset.title}
-                    </Typography>
-                  </Stack>
-                  <Typography variant="caption" color="#475569" display="block">
-                    <strong>Search Term:</strong> {preset.kw}
-                  </Typography>
-                  <Typography variant="caption" color="#64748b" display="block" sx={{ mb: 1.5 }}>
-                    <strong>Region:</strong> {preset.loc}
-                  </Typography>
-                  <Button
-                    size="small"
-                    variant="text"
-                    sx={{ p: 0, fontSize: '0.8rem', fontWeight: 600, color: '#2563eb' }}
-                  >
-                    Use Preset &rarr;
-                  </Button>
-                </Card>
-              </Grid>
+                  Use Preset &rarr;
+                </Button>
+              </Card>
             ))}
-          </Grid>
+          </Box>
         </Box>
       )}
 

@@ -384,58 +384,59 @@ function SavedJobs() {
           border: "1px solid #e2e8f0",
         }}
       >
-        <Grid container spacing={2.5} alignItems="center">
-          <Grid item xs={12} sm={5} md={5}>
-            <TextField
-              label="Search Saved Titles"
-              placeholder="Filter by keyword..."
-              value={keywords}
-              onChange={(e) => setKeywords(e.target.value)}
-              fullWidth
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon sx={{ color: "#94a3b8" }} />
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </Grid>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "1.2fr 1fr 160px" },
+            gap: 2.5,
+            alignItems: "center",
+          }}
+        >
+          <TextField
+            label="Search Saved Titles"
+            placeholder="Filter by keyword..."
+            value={keywords}
+            onChange={(e) => setKeywords(e.target.value)}
+            fullWidth
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon sx={{ color: "#94a3b8" }} />
+                </InputAdornment>
+              ),
+            }}
+          />
 
-          <Grid item xs={12} sm={4} md={4}>
-            <TextField
-              label="Filter by Location"
-              placeholder="e.g. Remote, Austin..."
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              fullWidth
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <LocationIcon sx={{ color: "#94a3b8" }} />
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </Grid>
+          <TextField
+            label="Filter by Location"
+            placeholder="e.g. Remote, Austin..."
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            fullWidth
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <LocationIcon sx={{ color: "#94a3b8" }} />
+                </InputAdornment>
+              ),
+            }}
+          />
 
-          <Grid item xs={12} sm={3} md={3}>
-            <FormControl fullWidth>
-              <InputLabel id="page-size-label">Per Page</InputLabel>
-              <Select
-                labelId="page-size-label"
-                value={pageSize}
-                onChange={handlePageSizeChange}
-                label="Per Page"
-              >
-                <MenuItem value={6}>6 jobs</MenuItem>
-                <MenuItem value={12}>12 jobs</MenuItem>
-                <MenuItem value={24}>24 jobs</MenuItem>
-                <MenuItem value={48}>48 jobs</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-        </Grid>
+          <FormControl fullWidth>
+            <InputLabel id="page-size-label">Per Page</InputLabel>
+            <Select
+              labelId="page-size-label"
+              value={pageSize}
+              onChange={handlePageSizeChange}
+              label="Per Page"
+            >
+              <MenuItem value={6}>6 jobs</MenuItem>
+              <MenuItem value={12}>12 jobs</MenuItem>
+              <MenuItem value={24}>24 jobs</MenuItem>
+              <MenuItem value={48}>48 jobs</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
       </Paper>
 
       {error && (
@@ -449,20 +450,26 @@ function SavedJobs() {
         </Alert>
       )}
 
-      {/* Jobs Grid */}
-      <Grid container spacing={3}>
+      {/* Jobs Grid - 3 cols desktop, 2 cols tablet, 1 col mobile */}
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: {
+            xs: "1fr",
+            sm: "repeat(2, 1fr)",
+            lg: "repeat(3, 1fr)",
+          },
+          gap: 3,
+        }}
+      >
         {loading
           ? Array.from({ length: pageSize }).map((_, index) => (
-              <Grid item xs={12} sm={6} lg={4} key={index}>
-                <JobSkeleton />
-              </Grid>
+              <JobSkeleton key={index} />
             ))
           : jobs.map((job) => (
-              <Grid item xs={12} sm={6} lg={4} key={job.id}>
-                <JobCard job={job} />
-              </Grid>
+              <JobCard job={job} key={job.id} />
             ))}
-      </Grid>
+      </Box>
 
       {/* Clean Empty State & Action Cards */}
       {!loading && jobs.length === 0 && !error && (

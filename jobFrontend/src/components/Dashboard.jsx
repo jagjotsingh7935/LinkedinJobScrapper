@@ -175,13 +175,18 @@ const Dashboard = () => {
     return (
       <Box sx={{ width: '100%', pb: 6 }}>
         <Skeleton variant="rounded" height={130} sx={{ borderRadius: 3.5, mb: 3 }} />
-        <Grid container spacing={2.5} mb={3}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' },
+            gap: 2.5,
+            mb: 3,
+          }}
+        >
           {[1, 2, 3, 4].map((i) => (
-            <Grid item xs={12} sm={6} md={3} key={i}>
-              <Skeleton variant="rounded" height={150} sx={{ borderRadius: 3.5 }} />
-            </Grid>
+            <Skeleton key={i} variant="rounded" height={150} sx={{ borderRadius: 3.5 }} />
           ))}
-        </Grid>
+        </Box>
         <Skeleton variant="rounded" height={450} sx={{ borderRadius: 3.5 }} />
       </Box>
     );
@@ -484,53 +489,52 @@ const Dashboard = () => {
         </Stack>
       </Paper>
 
-      {/* Top 4 Metrics Grid - Spanning Full Width */}
-      <Grid container spacing={2.5} mb={3.5}>
-        <Grid item xs={12} sm={6} md={3}>
-          <ModernStatCard
-            title="Total Searches"
-            value={total_searches}
-            subtitle="Pipeline Queries Run"
-            icon={<SearchIcon />}
-            gradient="linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)"
-            trendText="+12% Active"
-            trendColor="primary"
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <ModernStatCard
-            title="Harvested Jobs"
-            value={total_jobs}
-            subtitle="Extracted Postings"
-            icon={<WorkIcon />}
-            gradient="linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)"
-            trendText="+24.8% MoM"
-            trendColor="secondary"
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <ModernStatCard
-            title="Avg Yield per Run"
-            value={Number(average_jobs_per_search || 0).toFixed(1)}
-            subtitle="Listings per Query"
-            icon={<TimelineIcon />}
-            gradient="linear-gradient(135deg, #10b981 0%, #059669 100%)"
-            trendText="Optimal"
-            trendColor="success"
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <ModernStatCard
-            title="Active Feeds"
-            value={recent_searches.length}
-            subtitle="Historical Sessions"
-            icon={<ScheduleIcon />}
-            gradient="linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"
-            trendText="Tracking"
-            trendColor="warning"
-          />
-        </Grid>
-      </Grid>
+      {/* Top 4 Metrics Grid - 4 columns on large screens */}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' },
+          gap: 2.5,
+          mb: 3.5,
+        }}
+      >
+        <ModernStatCard
+          title="Total Searches"
+          value={total_searches}
+          subtitle="Pipeline Queries Run"
+          icon={<SearchIcon />}
+          gradient="linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)"
+          trendText="+12% Active"
+          trendColor="primary"
+        />
+        <ModernStatCard
+          title="Harvested Jobs"
+          value={total_jobs}
+          subtitle="Extracted Postings"
+          icon={<WorkIcon />}
+          gradient="linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)"
+          trendText="+24.8% MoM"
+          trendColor="secondary"
+        />
+        <ModernStatCard
+          title="Avg Yield per Run"
+          value={Number(average_jobs_per_search || 0).toFixed(1)}
+          subtitle="Listings per Query"
+          icon={<TimelineIcon />}
+          gradient="linear-gradient(135deg, #10b981 0%, #059669 100%)"
+          trendText="Optimal"
+          trendColor="success"
+        />
+        <ModernStatCard
+          title="Active Feeds"
+          value={recent_searches.length}
+          subtitle="Historical Sessions"
+          icon={<ScheduleIcon />}
+          gradient="linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"
+          trendText="Tracking"
+          trendColor="warning"
+        />
+      </Box>
 
       {/* Quick Launch Control Strip to fill space with actionable tools */}
       <Paper
@@ -635,46 +639,49 @@ const Dashboard = () => {
         {/* ================= TAB 0: EXECUTIVE OVERVIEW (Full Width & Bottom Table Included) ================= */}
         <TabPanel value={activeTab} index={0}>
           <Box sx={{ px: { xs: 2, md: 3 }, pb: 3 }}>
-            {/* Charts Row */}
-            <Grid container spacing={3} mb={3.5}>
-              <Grid item xs={12} lg={7}>
-                <Card variant="outlined" sx={{ p: 2.5, borderRadius: 3, height: '100%' }}>
-                  <Stack direction="row" spacing={1.5} alignItems="center" mb={2}>
-                    <Avatar sx={{ width: 36, height: 36, bgcolor: '#eff6ff', color: '#2563eb' }}>
-                      <LocationIcon fontSize="small" />
-                    </Avatar>
-                    <Box>
-                      <Typography variant="h6" fontWeight={700} color="#0f172a">
-                        Postings by Location
-                      </Typography>
-                      <Typography variant="caption" color="#64748b">
-                        Geographic density of harvested job postings
-                      </Typography>
-                    </Box>
-                  </Stack>
-                  <Chart options={locationChartOptions} series={locationChartSeries} type="bar" height={320} />
-                </Card>
-              </Grid>
+            {/* Charts Row - 7fr and 5fr on desktop */}
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', lg: '7fr 5fr' },
+                gap: 3,
+                mb: 3.5,
+              }}
+            >
+              <Card variant="outlined" sx={{ p: 2.5, borderRadius: 3, height: '100%' }}>
+                <Stack direction="row" spacing={1.5} alignItems="center" mb={2}>
+                  <Avatar sx={{ width: 36, height: 36, bgcolor: '#eff6ff', color: '#2563eb' }}>
+                    <LocationIcon fontSize="small" />
+                  </Avatar>
+                  <Box>
+                    <Typography variant="h6" fontWeight={700} color="#0f172a">
+                      Postings by Location
+                    </Typography>
+                    <Typography variant="caption" color="#64748b">
+                      Geographic density of harvested job postings
+                    </Typography>
+                  </Box>
+                </Stack>
+                <Chart options={locationChartOptions} series={locationChartSeries} type="bar" height={320} />
+              </Card>
 
-              <Grid item xs={12} lg={5}>
-                <Card variant="outlined" sx={{ p: 2.5, borderRadius: 3, height: '100%' }}>
-                  <Stack direction="row" spacing={1.5} alignItems="center" mb={2}>
-                    <Avatar sx={{ width: 36, height: 36, bgcolor: '#f5f3ff', color: '#8b5cf6' }}>
-                      <GroupIcon fontSize="small" />
-                    </Avatar>
-                    <Box>
-                      <Typography variant="h6" fontWeight={700} color="#0f172a">
-                        Employment Breakdown
-                      </Typography>
-                      <Typography variant="caption" color="#64748b">
-                        Full-time, contract, and hybrid distribution
-                      </Typography>
-                    </Box>
-                  </Stack>
-                  <Chart options={employmentTypeChartOptions} series={employmentTypeChartSeries} type="donut" height={320} />
-                </Card>
-              </Grid>
-            </Grid>
+              <Card variant="outlined" sx={{ p: 2.5, borderRadius: 3, height: '100%' }}>
+                <Stack direction="row" spacing={1.5} alignItems="center" mb={2}>
+                  <Avatar sx={{ width: 36, height: 36, bgcolor: '#f5f3ff', color: '#8b5cf6' }}>
+                    <GroupIcon fontSize="small" />
+                  </Avatar>
+                  <Box>
+                    <Typography variant="h6" fontWeight={700} color="#0f172a">
+                      Employment Breakdown
+                    </Typography>
+                    <Typography variant="caption" color="#64748b">
+                      Full-time, contract, and hybrid distribution
+                    </Typography>
+                  </Box>
+                </Stack>
+                <Chart options={employmentTypeChartOptions} series={employmentTypeChartSeries} type="donut" height={320} />
+              </Card>
+            </Box>
 
             {/* Bottom Row: Recent Harvested Postings Table (Eliminates the empty bottom space!) */}
             <Card variant="outlined" sx={{ borderRadius: 3, overflow: 'hidden' }}>
@@ -780,74 +787,77 @@ const Dashboard = () => {
         {/* ================= TAB 1: TOP KEYWORDS & INTELLIGENCE (Rich Content Filling Complete Space) ================= */}
         <TabPanel value={activeTab} index={1}>
           <Box sx={{ px: { xs: 2, md: 3 }, pb: 3 }}>
-            {/* Row 1: Charts & Recent Queries */}
-            <Grid container spacing={3} mb={3.5}>
-              <Grid item xs={12} lg={7}>
-                <Card variant="outlined" sx={{ p: 2.5, borderRadius: 3, height: '100%' }}>
-                  <Stack direction="row" spacing={1.5} alignItems="center" mb={2}>
-                    <Avatar sx={{ width: 36, height: 36, bgcolor: '#ecfdf5', color: '#10b981' }}>
-                      <TrendingUpIcon fontSize="small" />
-                    </Avatar>
-                    <Box>
-                      <Typography variant="h6" fontWeight={700} color="#0f172a">
-                        Trending Job Keywords
-                      </Typography>
-                      <Typography variant="caption" color="#64748b">
-                        Highest query volume and market concentration across extractions
-                      </Typography>
-                    </Box>
-                  </Stack>
-                  <Chart options={keywordChartOptions} series={keywordChartSeries} type="bar" height={320} />
-                </Card>
-              </Grid>
+            {/* Row 1: Charts & Recent Queries - 7fr and 5fr on desktop */}
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', lg: '7fr 5fr' },
+                gap: 3,
+                mb: 3.5,
+              }}
+            >
+              <Card variant="outlined" sx={{ p: 2.5, borderRadius: 3, height: '100%' }}>
+                <Stack direction="row" spacing={1.5} alignItems="center" mb={2}>
+                  <Avatar sx={{ width: 36, height: 36, bgcolor: '#ecfdf5', color: '#10b981' }}>
+                    <TrendingUpIcon fontSize="small" />
+                  </Avatar>
+                  <Box>
+                    <Typography variant="h6" fontWeight={700} color="#0f172a">
+                      Trending Job Keywords
+                    </Typography>
+                    <Typography variant="caption" color="#64748b">
+                      Highest query volume and market concentration across extractions
+                    </Typography>
+                  </Box>
+                </Stack>
+                <Chart options={keywordChartOptions} series={keywordChartSeries} type="bar" height={320} />
+              </Card>
 
-              <Grid item xs={12} lg={5}>
-                <Card variant="outlined" sx={{ p: 2.5, borderRadius: 3, height: '100%' }}>
-                  <Typography variant="h6" fontWeight={700} color="#0f172a" mb={0.5}>
-                    Recent Search Queries
-                  </Typography>
-                  <Typography variant="caption" color="#64748b" sx={{ display: 'block', mb: 2 }}>
-                    Last logged extraction parameters and yield counts
-                  </Typography>
+              <Card variant="outlined" sx={{ p: 2.5, borderRadius: 3, height: '100%' }}>
+                <Typography variant="h6" fontWeight={700} color="#0f172a" mb={0.5}>
+                  Recent Search Queries
+                </Typography>
+                <Typography variant="caption" color="#64748b" sx={{ display: 'block', mb: 2 }}>
+                  Last logged extraction parameters and yield counts
+                </Typography>
 
-                  <Stack spacing={1.5}>
-                    {recent_searches.slice(0, 5).map((search) => (
-                      <Paper
-                        key={search.id}
-                        elevation={0}
-                        sx={{
-                          p: 1.5,
-                          borderRadius: 2.5,
-                          backgroundColor: '#f8fafc',
-                          border: '1px solid #e2e8f0',
-                        }}
-                      >
-                        <Stack direction="row" justifyContent="space-between" alignItems="center">
-                          <Box>
-                            <Typography variant="body2" fontWeight={700} color="#0f172a">
-                              {search.keywords}
-                            </Typography>
-                            <Typography variant="caption" color="#64748b">
-                              {search.location || 'Anywhere'} • {formatDate(search.created_at)}
-                            </Typography>
-                          </Box>
-                          <Chip
-                            label={`${search.job_count || 0} jobs`}
-                            size="small"
-                            sx={{ fontWeight: 700, backgroundColor: '#eff6ff', color: '#2563eb' }}
-                          />
-                        </Stack>
-                      </Paper>
-                    ))}
-                    {recent_searches.length === 0 && (
-                      <Typography variant="body2" color="#64748b" sx={{ py: 3, textAlign: 'center' }}>
-                        No search queries logged yet.
-                      </Typography>
-                    )}
-                  </Stack>
-                </Card>
-              </Grid>
-            </Grid>
+                <Stack spacing={1.5}>
+                  {recent_searches.slice(0, 5).map((search) => (
+                    <Paper
+                      key={search.id}
+                      elevation={0}
+                      sx={{
+                        p: 1.5,
+                        borderRadius: 2.5,
+                        backgroundColor: '#f8fafc',
+                        border: '1px solid #e2e8f0',
+                      }}
+                    >
+                      <Stack direction="row" justifyContent="space-between" alignItems="center">
+                        <Box>
+                          <Typography variant="body2" fontWeight={700} color="#0f172a">
+                            {search.keywords}
+                          </Typography>
+                          <Typography variant="caption" color="#64748b">
+                            {search.location || 'Anywhere'} • {formatDate(search.created_at)}
+                          </Typography>
+                        </Box>
+                        <Chip
+                          label={`${search.job_count || 0} jobs`}
+                          size="small"
+                          sx={{ fontWeight: 700, backgroundColor: '#eff6ff', color: '#2563eb' }}
+                        />
+                      </Stack>
+                    </Paper>
+                  ))}
+                  {recent_searches.length === 0 && (
+                    <Typography variant="body2" color="#64748b" sx={{ py: 3, textAlign: 'center' }}>
+                      No search queries logged yet.
+                    </Typography>
+                  )}
+                </Stack>
+              </Card>
+            </Box>
 
             {/* Row 2: Comprehensive Keyword Frequency Matrix (Fills the lower half of the screen!) */}
             <Card variant="outlined" sx={{ borderRadius: 3, overflow: 'hidden', mb: 3.5 }}>
