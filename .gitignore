@@ -1,0 +1,48 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+dist-ssr/
+
+# Archives and scratch folders
+*.zip
+*.tar.gz
+*.rar
+New folder/
+New folder (2)/
+tempCodeRunnerFile.*
+
+# Django & Database backups
+*.log
+db_*.sqlite3
+db_local.sqlite3
+
+# WhiteNoise compressed files
+*.br
+*.gz
+
+# Environments & secrets
+.env
+.env.local
+!.env.example
+.venv
+venv/
+ENV/
+env/
+
+# IDE & OS
+.vscode/
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Vercel
+.vercel

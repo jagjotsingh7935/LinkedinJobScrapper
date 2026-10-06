@@ -1,10 +1,10 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [react()],
-  base: '/',
-  // base: '/static/',
+  base: mode === 'development' ? '/' : '/static/',
+
   build: {
     outDir: path.resolve(__dirname, './dist'),
     assetsDir: 'assets',
@@ -31,4 +31,4 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
-});
+}));

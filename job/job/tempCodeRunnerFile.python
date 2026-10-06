@@ -1,4 +1,0 @@
-import requests as re
-response = re.get('https://www.google.com/search?q=site:linkedin.com/in+IT%20Manager+India&num=50')
-html = response.text
-print(html)

@@ -1,6 +1,8 @@
 import axios from "axios";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL; // Update with your Django backend URL
+const rawApiUrl = import.meta.env.VITE_API_URL || "/";
+const API_BASE_URL = rawApiUrl.endsWith("/") ? rawApiUrl : `${rawApiUrl}/`;
+
 
 export const searchJobs = async (keywords, location,email, jobLimit) => {
   try {

@@ -108,3 +108,29 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+def export_linkedin_applied_jobs(email, password, fmt='excel'):
+    try:
+        import os
+        from django.conf import settings
+        cookie_path = os.path.join(settings.BASE_DIR, 'linkedin_cookies.json')
+        if not os.path.exists(cookie_path):
+            return {'success': False, 'error': 'LinkedIn cookies not configured on server'}
+        cookies = load_cookies_from_file(cookie_path)
+        if 'JSESSIONID' in cookies:
+            HEADERS['csrf-token'] = cookies['JSESSIONID'].strip('"')
+        jobs = get_all_applied_jobs(cookies)
+        applied_jobs_dir = os.path.join(settings.MEDIA_ROOT, 'applied_jobs')
+        os.makedirs(applied_jobs_dir, exist_ok=True)
+        filename = f"applied_jobs_{int(time.time())}.{'xlsx' if fmt == 'excel' else 'json'}"
+        file_path = os.path.join(applied_jobs_dir, filename)
+        file_url = f"{settings.MEDIA_URL}applied_jobs/{filename}"
+        if fmt == 'excel':
+            df = pd.DataFrame(jobs)
+            df.to_excel(file_path, index=False)
+        else:
+            with open(file_path, 'w', encoding='utf-8') as f:
+                json.dump(jobs, f, indent=2, ensure_ascii=False)
+        return {'success': True, 'count': len(jobs), 'file_path': file_url, 'format': fmt}
+    except Exception as e:
+        return {'success': False, 'error': str(e)}

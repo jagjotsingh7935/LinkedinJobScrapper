@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 
-# import dj_database_url
+import dj_database_url
 
 import os
 from pathlib import Path
@@ -28,12 +28,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-xis3_2m-17h8@uu*0bcbf&ei5$kxy=awat*j*e125&#qi-i7$j'
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-xis3_2m-17h8@uu*0bcbf&ei5$kxy=awat*j*e125&#qi-i7$j')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1', 't')
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1","http://31.97.233.53","31.97.233.53"]
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "31.97.233.53", ".onrender.com", "*"]
+RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
@@ -41,6 +44,8 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:8000",
     "http://31.97.233.53"
 ]
+if RENDER_EXTERNAL_HOSTNAME:
+    CORS_ALLOWED_ORIGINS.append(f"https://{RENDER_EXTERNAL_HOSTNAME}")
 
 # Allow credentials (if needed)
 CORS_ALLOW_CREDENTIALS = True
@@ -65,6 +70,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -106,7 +112,9 @@ DATABASES = {
     }
 }
 
-# DATABASES["default"] = dj_database_url.parse("postgresql://django_render_gr7i_user:eFwf8iaBG12xFm58gyECDDIcyuus0FQq@dpg-cutd213tq21c73be2td0-a.oregon-postgres.render.com/django_render_gr7i")
+DATABASE_URL = os.getenv('DATABASE_URL')
+if DATABASE_URL:
+    DATABASES['default'] = dj_database_url.parse(DATABASE_URL)
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -142,25 +150,33 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-STATICFILES_DIRS=[
-    os.path.join(BASE_DIR,'dist'),
-    os.path.join(BASE_DIR,'dist/.vite'),
-    os.path.join(BASE_DIR,'dist/assets'),
-    os.path.join(BASE_DIR,'dist/logo'),
-    os.path.join(BASE_DIR,'dist/favicon'),
-    os.path.join(BASE_DIR,'dist/fonts'),
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'dist'),
 ]
 
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
+    },
+}
 
 CSRF_TRUSTED_ORIGINS = [
-    "http://31.97.233.53"
+    "http://31.97.233.53",
+    "https://*.onrender.com",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
 ]
+if RENDER_EXTERNAL_HOSTNAME:
+    CSRF_TRUSTED_ORIGINS.append(f"https://{RENDER_EXTERNAL_HOSTNAME}")
+
 
 
 

@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: linkedin-job-scrapper
+    runtime: python
+    region: oregon
+    plan: free
+    rootDir: job/job
+    buildCommand: ./build.sh
+    startCommand: gunicorn job.wsgi:application
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: DEBUG
+        value: "False"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: EMAIL_HOST_USER
+        sync: false
+      - key: EMAIL_HOST_PASSWORD
+        sync: false
