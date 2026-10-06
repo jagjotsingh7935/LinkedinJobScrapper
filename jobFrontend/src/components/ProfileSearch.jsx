@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-  Container,
   TextField,
   Button,
   Box,
@@ -32,6 +31,9 @@ import {
   Close as CloseIcon,
   Numbers as NumbersIcon,
   Badge as BadgeIcon,
+  Bolt as BoltIcon,
+  Speed as SpeedIcon,
+  Shield as ShieldIcon,
 } from '@mui/icons-material';
 import { searchProfiles, downloadProfilesExcel } from "./api";
 
@@ -48,6 +50,20 @@ const ProfileSearch = () => {
   const [openDescriptionDialog, setOpenDescriptionDialog] = useState(false);
   const [selectedDescription, setSelectedDescription] = useState('');
   const [selectedProfileTitle, setSelectedProfileTitle] = useState('');
+
+  const talentPresets = [
+    { title: 'Technical Recruiter', kw: 'Technical Recruiter Talent Acquisition', loc: 'Remote' },
+    { title: 'VP of Engineering', kw: 'VP Engineering Head of Technology', loc: 'San Francisco, CA' },
+    { title: 'Staff Frontend Architect', kw: 'Staff Frontend Engineer React', loc: 'New York, NY' },
+    { title: 'Chief Technology Officer', kw: 'CTO Founder Co-Founder', loc: 'London, UK' },
+    { title: 'Head of Product', kw: 'Head of Product Director Product', loc: 'Austin, TX' },
+    { title: 'AI Research Scientist', kw: 'AI Research Scientist Machine Learning', loc: 'Seattle, WA' },
+  ];
+
+  const handleApplyPreset = (preset) => {
+    setKeywords(preset.kw);
+    setLocation(preset.loc);
+  };
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -240,268 +256,297 @@ const ProfileSearch = () => {
   );
 
   return (
-    <Box sx={{ minHeight: "100vh", backgroundColor: "#f8fafc" }}>
-      <Container maxWidth="xl" sx={{ py: { xs: 2.5, sm: 3.5, md: 4 } }}>
-        {/* Banner */}
-        <Paper
-          elevation={0}
-          sx={{
-            background: "linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #4f46e5 140%)",
-            color: "white",
-            p: { xs: 3, sm: 4 },
-            mb: { xs: 3, sm: 4 },
-            borderRadius: 4,
-            boxShadow: "0 10px 30px -10px rgba(15, 23, 42, 0.3)",
-          }}
-        >
-          <Stack direction="row" spacing={2.5} alignItems="center">
-            <Avatar
-              sx={{
-                bgcolor: "rgba(255, 255, 255, 0.12)",
-                border: "1px solid rgba(255, 255, 255, 0.2)",
-                width: { xs: 52, sm: 60 },
-                height: { xs: 52, sm: 60 },
-                backdropFilter: "blur(12px)",
-              }}
-            >
-              <BadgeIcon sx={{ fontSize: { xs: 26, sm: 30 }, color: "#a5b4fc" }} />
-            </Avatar>
-            <Box>
-              <Typography
-                variant="h4"
-                component="h1"
-                sx={{
-                  fontWeight: 800,
-                  fontSize: { xs: "1.6rem", sm: "2rem" },
-                  letterSpacing: "-0.02em",
-                }}
-              >
-                LinkedIn Talent & Profile Search
-              </Typography>
-              <Typography variant="body1" sx={{ color: "#94a3b8", fontSize: "0.95rem" }}>
-                Discover key professionals, recruiters, and candidates directly via Google / LinkedIn indexing.
-              </Typography>
-            </Box>
-          </Stack>
-        </Paper>
-
-        {/* Search Parameter Card */}
-        <Paper
-          elevation={0}
-          sx={{
-            p: { xs: 2.5, sm: 3.5 },
-            mb: 4,
-            borderRadius: 3.5,
-            backgroundColor: "#ffffff",
-            border: "1px solid #e2e8f0",
-          }}
-        >
-          <Box component="form" onSubmit={handleSearch}>
-            <Grid container spacing={2.5} alignItems="center">
-              <Grid item xs={12} sm={5} md={5}>
-                <TextField
-                  label="Keywords / Name / Title"
-                  placeholder="e.g. Technical Recruiter, VP Engineering"
-                  value={keywords}
-                  onChange={(e) => setKeywords(e.target.value)}
-                  required
-                  fullWidth
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <SearchIcon sx={{ color: "#94a3b8" }} />
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12} sm={4} md={4}>
-                <TextField
-                  label="Target Location"
-                  placeholder="e.g. Toronto, Seattle, Remote"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  fullWidth
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <LocationIcon sx={{ color: "#94a3b8" }} />
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12} sm={3} md={1.5}>
-                <TextField
-                  label="Max Pages"
-                  type="number"
-                  value={maxPages}
-                  onChange={(e) => setMaxPages(Math.max(1, Math.min(10, Number(e.target.value))))}
-                  fullWidth
-                  inputProps={{ min: 1, max: 10 }}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <NumbersIcon sx={{ color: "#94a3b8", fontSize: 18 }} />
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12} sm={12} md={1.5}>
-                <Button
-                  type="submit"
-                  variant="contained"
-                  fullWidth
-                  disabled={loading || !keywords}
-                  sx={{
-                    height: '52px',
-                    borderRadius: 2.5,
-                    fontWeight: 700,
-                    backgroundColor: "#2563eb",
-                    boxShadow: "0 4px 14px rgba(37, 99, 235, 0.25)",
-                    "&:hover": { backgroundColor: "#1d4ed8" },
-                  }}
-                >
-                  {loading ? <CircularProgress size={22} color="inherit" /> : 'Search'}
-                </Button>
-              </Grid>
-            </Grid>
-          </Box>
-        </Paper>
-
-        {/* Excel Export Action */}
-        {profiles.length > 0 && (
-          <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
-            <Typography variant="h6" sx={{ fontWeight: 700, color: "#0f172a" }}>
-              Identified Profiles ({profiles.length})
-            </Typography>
-
-            <Button
-              variant="outlined"
-              startIcon={downloading ? <CircularProgress size={16} /> : <DownloadIcon />}
-              onClick={handleDownloadExcel}
-              disabled={downloading}
-              sx={{
-                textTransform: "none",
-                borderRadius: 2,
-                fontWeight: 600,
-                borderColor: "#cbd5e1",
-                color: "#334155",
-                "&:hover": { borderColor: "#2563eb", color: "#2563eb", backgroundColor: "#eff6ff" },
-              }}
-            >
-              Download Excel Export
-            </Button>
-          </Box>
-        )}
-
-        {downloadUrl && (
-          <Alert severity="success" sx={{ mb: 3, borderRadius: 2.5, fontWeight: 500 }}>
-            <Typography variant="body2">
-              Excel file generated!{' '}
-              <a href={downloadUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#047857', fontWeight: 700 }}>
-                Click here to download spreadsheet
-              </a>
-            </Typography>
-          </Alert>
-        )}
-
-        {error && (
-          <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 3, borderRadius: 2.5, fontWeight: 500 }}>
-            {error}
-          </Alert>
-        )}
-        {message && !loading && (
-          <Alert severity="info" onClose={() => setMessage('')} sx={{ mb: 3, borderRadius: 2.5, fontWeight: 500 }}>
-            {message}
-          </Alert>
-        )}
-
-        {/* Profile Results Grid */}
-        <Grid container spacing={2.5}>
-          {loading
-            ? Array.from({ length: 6 }).map((_, index) => (
-                <Grid item xs={12} key={index}>
-                  <ProfileSkeleton />
-                </Grid>
-              ))
-            : profiles.length > 0
-              ? profiles.map((profile, index) => (
-                  <Grid item xs={12} key={index}>
-                    <ProfileCard profile={profile} />
-                  </Grid>
-                ))
-              : null}
-        </Grid>
-
-        {/* Clean Empty State */}
-        {!loading && profiles.length === 0 && !error && message && (
-          <Paper
-            elevation={0}
+    <Box sx={{ width: "100%", pb: 6 }}>
+      {/* Banner with explicit white text */}
+      <Paper
+        elevation={0}
+        sx={{
+          background: "linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #4f46e5 140%)",
+          p: { xs: 3, sm: 3.5, md: 4 },
+          mb: 3.5,
+          borderRadius: 4,
+          boxShadow: "0 8px 24px -4px rgba(15, 23, 42, 0.25)",
+        }}
+      >
+        <Stack direction="row" spacing={2.5} alignItems="center">
+          <Avatar
             sx={{
-              textAlign: "center",
-              py: 8,
-              px: 3,
-              backgroundColor: "#ffffff",
-              borderRadius: 3.5,
-              border: "2px dashed #cbd5e1",
+              bgcolor: "rgba(255, 255, 255, 0.12)",
+              border: "1px solid rgba(255, 255, 255, 0.2)",
+              width: { xs: 52, sm: 60 },
+              height: { xs: 52, sm: 60 },
+              backdropFilter: "blur(12px)",
             }}
           >
-            <Avatar
+            <BadgeIcon sx={{ fontSize: { xs: 26, sm: 30 }, color: "#a5b4fc" }} />
+          </Avatar>
+          <Box>
+            <Typography
+              variant="h4"
+              component="h1"
               sx={{
-                width: 68,
-                height: 68,
-                margin: "0 auto",
-                mb: 2,
-                bgcolor: "#eff6ff",
-                color: "#2563eb",
+                fontWeight: 800,
+                color: "#ffffff !important",
+                fontSize: { xs: "1.5rem", sm: "1.85rem", md: "2rem" },
+                letterSpacing: "-0.02em",
+                mb: 0.5,
               }}
             >
-              <PersonIcon sx={{ fontSize: 32 }} />
-            </Avatar>
-            <Typography variant="h6" sx={{ fontWeight: 700, color: "#0f172a", mb: 0.5 }}>
-              No Profiles Found
+              LinkedIn Talent & Profile Search
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 440, mx: "auto" }}>
-              Try broadening your query keywords or adjusting target locations.
+            <Typography variant="body1" sx={{ color: "#cbd5e1 !important", fontSize: "0.95rem" }}>
+              Discover key professionals, recruiters, and candidates directly via Google / LinkedIn indexing.
             </Typography>
-          </Paper>
-        )}
+          </Box>
+        </Stack>
+      </Paper>
 
-        {/* Dialog: Profile Snippet */}
-        <Dialog
-          open={openDescriptionDialog}
-          onClose={() => setOpenDescriptionDialog(false)}
-          maxWidth="md"
-          fullWidth
-          PaperProps={{ elevation: 0, sx: { borderRadius: 3.5, p: 1 } }}
-        >
-          <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Box>
-              <Typography variant="h6" sx={{ fontWeight: 700, color: "#0f172a" }}>
-                {selectedProfileTitle}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                Full Profile Snippet
-              </Typography>
-            </Box>
-            <IconButton onClick={() => setOpenDescriptionDialog(false)} size="small">
-              <CloseIcon />
-            </IconButton>
-          </DialogTitle>
-          <DialogContent dividers sx={{ borderColor: "#f1f5f9", py: 2.5 }}>
-            <Typography variant="body2" sx={{ color: "#334155", lineHeight: 1.8, whiteSpace: 'pre-line' }}>
-              {selectedDescription}
+      {/* Search Parameter Card - Full Width */}
+      <Paper
+        elevation={0}
+        sx={{
+          p: { xs: 2.5, sm: 3.5 },
+          mb: 4,
+          borderRadius: 3.5,
+          backgroundColor: "#ffffff",
+          border: "1px solid #e2e8f0",
+        }}
+      >
+        <Box component="form" onSubmit={handleSearch}>
+          <Grid container spacing={2.5} alignItems="center">
+            <Grid item xs={12} sm={5} md={5}>
+              <TextField
+                label="Keywords / Name / Title"
+                placeholder="e.g. Technical Recruiter, VP Engineering"
+                value={keywords}
+                onChange={(e) => setKeywords(e.target.value)}
+                required
+                fullWidth
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon sx={{ color: "#94a3b8" }} />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={4} md={4}>
+              <TextField
+                label="Target Location"
+                placeholder="e.g. Toronto, Seattle, Remote"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                fullWidth
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <LocationIcon sx={{ color: "#94a3b8" }} />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={3} md={1.5}>
+              <TextField
+                label="Max Pages"
+                type="number"
+                value={maxPages}
+                onChange={(e) => setMaxPages(Math.max(1, Math.min(10, Number(e.target.value))))}
+                fullWidth
+                inputProps={{ min: 1, max: 10 }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <NumbersIcon sx={{ color: "#94a3b8", fontSize: 18 }} />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={12} md={1.5}>
+              <Button
+                type="submit"
+                variant="contained"
+                fullWidth
+                disabled={loading || !keywords}
+                sx={{
+                  height: '52px',
+                  borderRadius: 2.5,
+                  fontWeight: 700,
+                  backgroundColor: "#2563eb",
+                  boxShadow: "0 4px 14px rgba(37, 99, 235, 0.25)",
+                  "&:hover": { backgroundColor: "#1d4ed8" },
+                }}
+              >
+                {loading ? <CircularProgress size={22} color="inherit" /> : 'Search'}
+              </Button>
+            </Grid>
+          </Grid>
+        </Box>
+      </Paper>
+
+      {/* Excel Export Action */}
+      {profiles.length > 0 && (
+        <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+          <Typography variant="h6" sx={{ fontWeight: 700, color: "#0f172a" }}>
+            Identified Profiles ({profiles.length})
+          </Typography>
+
+          <Button
+            variant="outlined"
+            startIcon={downloading ? <CircularProgress size={16} /> : <DownloadIcon />}
+            onClick={handleDownloadExcel}
+            disabled={downloading}
+            sx={{
+              textTransform: "none",
+              borderRadius: 2,
+              fontWeight: 600,
+              borderColor: "#cbd5e1",
+              color: "#334155",
+              "&:hover": { borderColor: "#2563eb", color: "#2563eb", backgroundColor: "#eff6ff" },
+            }}
+          >
+            Download Excel Export
+          </Button>
+        </Box>
+      )}
+
+      {downloadUrl && (
+        <Alert severity="success" sx={{ mb: 3, borderRadius: 2.5, fontWeight: 500 }}>
+          <Typography variant="body2">
+            Excel file generated!{' '}
+            <a href={downloadUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#047857', fontWeight: 700 }}>
+              Click here to download spreadsheet
+            </a>
+          </Typography>
+        </Alert>
+      )}
+
+      {error && (
+        <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 3, borderRadius: 2.5, fontWeight: 500 }}>
+          {error}
+        </Alert>
+      )}
+      {message && !loading && (
+        <Alert severity="info" onClose={() => setMessage('')} sx={{ mb: 3, borderRadius: 2.5, fontWeight: 500 }}>
+          {message}
+        </Alert>
+      )}
+
+      {/* Profile Results Grid */}
+      {profiles.length > 0 && (
+        <Grid container spacing={2.5}>
+          {profiles.map((profile, index) => (
+            <Grid item xs={12} key={index}>
+              <ProfileCard profile={profile} />
+            </Grid>
+          ))}
+        </Grid>
+      )}
+
+      {loading && (
+        <Grid container spacing={2.5}>
+          {Array.from({ length: 6 }).map((_, index) => (
+            <Grid item xs={12} key={index}>
+              <ProfileSkeleton />
+            </Grid>
+          ))}
+        </Grid>
+      )}
+
+      {/* Suggested Talent Templates when no profiles searched yet (COVERS COMPLETE SPACE) */}
+      {!loading && profiles.length === 0 && !error && (
+        <Box>
+          <Box sx={{ mb: 2.5 }}>
+            <Typography variant="h6" fontWeight={700} color="#0f172a">
+              Recommended Talent Searches
             </Typography>
-          </DialogContent>
-          <DialogActions sx={{ p: 2 }}>
-            <Button onClick={() => setOpenDescriptionDialog(false)} sx={{ fontWeight: 600 }}>
-              Close
-            </Button>
-          </DialogActions>
-        </Dialog>
-      </Container>
+            <Typography variant="body2" color="#64748b">
+              Click any executive or specialist preset below to populate search parameters
+            </Typography>
+          </Box>
+
+          <Grid container spacing={2.5} mb={4}>
+            {talentPresets.map((preset, idx) => (
+              <Grid item xs={12} sm={6} md={4} key={idx}>
+                <Card
+                  elevation={0}
+                  sx={{
+                    p: 2.5,
+                    borderRadius: 3,
+                    border: '1px solid #e2e8f0',
+                    backgroundColor: '#ffffff',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      transform: 'translateY(-3px)',
+                      borderColor: '#2563eb',
+                      boxShadow: '0 8px 20px rgba(37, 99, 235, 0.08)',
+                    },
+                  }}
+                  onClick={() => handleApplyPreset(preset)}
+                >
+                  <Stack direction="row" spacing={1.5} alignItems="center" mb={1.5}>
+                    <Avatar sx={{ width: 34, height: 34, bgcolor: '#eff6ff', color: '#2563eb' }}>
+                      <BoltIcon fontSize="small" />
+                    </Avatar>
+                    <Typography variant="subtitle2" fontWeight={700} color="#0f172a">
+                      {preset.title}
+                    </Typography>
+                  </Stack>
+                  <Typography variant="caption" color="#475569" display="block">
+                    <strong>Search Term:</strong> {preset.kw}
+                  </Typography>
+                  <Typography variant="caption" color="#64748b" display="block" sx={{ mb: 1.5 }}>
+                    <strong>Region:</strong> {preset.loc}
+                  </Typography>
+                  <Button
+                    size="small"
+                    variant="text"
+                    sx={{ p: 0, fontSize: '0.8rem', fontWeight: 600, color: '#2563eb' }}
+                  >
+                    Use Preset &rarr;
+                  </Button>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
+      )}
+
+      {/* Dialog: Profile Snippet */}
+      <Dialog
+        open={openDescriptionDialog}
+        onClose={() => setOpenDescriptionDialog(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{ elevation: 0, sx: { borderRadius: 3.5, p: 1 } }}
+      >
+        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Box>
+            <Typography variant="h6" sx={{ fontWeight: 700, color: "#0f172a" }}>
+              {selectedProfileTitle}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Full Profile Snippet
+            </Typography>
+          </Box>
+          <IconButton onClick={() => setOpenDescriptionDialog(false)} size="small">
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers sx={{ borderColor: "#f1f5f9", py: 2.5 }}>
+          <Typography variant="body2" sx={{ color: "#334155", lineHeight: 1.8, whiteSpace: 'pre-line' }}>
+            {selectedDescription}
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setOpenDescriptionDialog(false)} sx={{ fontWeight: 600 }}>
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

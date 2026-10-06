@@ -475,85 +475,85 @@ function JobSearch() {
   };
 
   return (
-    <Box sx={{ minHeight: "100vh", backgroundColor: "#f8fafc" }}>
-      <Container maxWidth="xl" sx={{ py: { xs: 2.5, sm: 3.5, md: 4 } }}>
-        {/* Executive Page Header Banner */}
-        <Paper
-          elevation={0}
-          sx={{
-            background: "linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #2563eb 120%)",
-            color: "white",
-            p: { xs: 3, sm: 4 },
-            mb: { xs: 3, sm: 4 },
-            borderRadius: 4,
-            position: "relative",
-            overflow: "hidden",
-            boxShadow: "0 10px 30px -10px rgba(15, 23, 42, 0.35)",
-            "&::after": {
-              content: '""',
-              position: "absolute",
-              top: "-50%",
-              right: "-10%",
-              width: "450px",
-              height: "450px",
-              background: "radial-gradient(circle, rgba(59, 130, 246, 0.2) 0%, transparent 70%)",
-              pointerEvents: "none",
-            },
-          }}
-        >
-          <Grid container spacing={3} alignItems="center" justifyContent="space-between">
-            <Grid item xs={12} md={8}>
-              <Stack direction="row" spacing={2.5} alignItems="center">
-                <Avatar
-                  sx={{
-                    bgcolor: "rgba(255, 255, 255, 0.12)",
-                    border: "1px solid rgba(255, 255, 255, 0.2)",
-                    width: { xs: 52, sm: 60 },
-                    height: { xs: 52, sm: 60 },
-                    backdropFilter: "blur(12px)",
-                  }}
-                >
-                  <WorkIcon sx={{ fontSize: { xs: 26, sm: 30 }, color: "#60a5fa" }} />
-                </Avatar>
-                <Box>
-                  <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.5 }}>
-                    <Typography
-                      variant="h4"
-                      component="h1"
-                      sx={{
-                        fontWeight: 800,
-                        fontSize: { xs: "1.6rem", sm: "2rem" },
-                        letterSpacing: "-0.02em",
-                      }}
-                    >
-                      Job Search & Scraper
-                    </Typography>
-                    <Chip
-                      icon={<SparklesIcon sx={{ fontSize: "14px !important", color: "#60a5fa !important" }} />}
-                      label="Pro Pipeline"
-                      size="small"
-                      sx={{
-                        backgroundColor: "rgba(59, 130, 246, 0.25)",
-                        color: "#93c5fd",
-                        fontWeight: 700,
-                        fontSize: "0.75rem",
-                        display: { xs: "none", sm: "inline-flex" },
-                      }}
-                    />
-                  </Stack>
+    <Box sx={{ width: "100%", pb: 6 }}>
+      {/* Executive Page Header Banner */}
+      <Paper
+        elevation={0}
+        sx={{
+          background: "linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #2563eb 120%)",
+          color: "white",
+          p: { xs: 3, sm: 3.5, md: 4 },
+          mb: { xs: 3, sm: 3.5 },
+          borderRadius: 4,
+          position: "relative",
+          overflow: "hidden",
+          boxShadow: "0 8px 24px -4px rgba(15, 23, 42, 0.25)",
+          "&::after": {
+            content: '""',
+            position: "absolute",
+            top: "-50%",
+            right: "-10%",
+            width: "450px",
+            height: "450px",
+            background: "radial-gradient(circle, rgba(59, 130, 246, 0.2) 0%, transparent 70%)",
+            pointerEvents: "none",
+          },
+        }}
+      >
+        <Grid container spacing={3} alignItems="center" justifyContent="space-between">
+          <Grid item xs={12} md={8}>
+            <Stack direction="row" spacing={2.5} alignItems="center">
+              <Avatar
+                sx={{
+                  bgcolor: "rgba(255, 255, 255, 0.12)",
+                  border: "1px solid rgba(255, 255, 255, 0.2)",
+                  width: { xs: 52, sm: 60 },
+                  height: { xs: 52, sm: 60 },
+                  backdropFilter: "blur(12px)",
+                }}
+              >
+                <WorkIcon sx={{ fontSize: { xs: 26, sm: 30 }, color: "#60a5fa" }} />
+              </Avatar>
+              <Box>
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.5 }}>
                   <Typography
-                    variant="body1"
+                    variant="h4"
+                    component="h1"
                     sx={{
-                      color: "#94a3b8",
-                      fontSize: { xs: "0.875rem", sm: "0.975rem" },
-                      maxWidth: 600,
+                      fontWeight: 800,
+                      color: "#ffffff !important",
+                      fontSize: { xs: "1.5rem", sm: "1.85rem", md: "2rem" },
+                      letterSpacing: "-0.02em",
                     }}
                   >
-                    Extract real-time postings directly from LinkedIn or set up automated scheduled alerts delivered straight to your email.
+                    Job Search & Scraper
                   </Typography>
-                </Box>
-              </Stack>
-            </Grid>
+                  <Chip
+                    icon={<SparklesIcon sx={{ fontSize: "14px !important", color: "#60a5fa !important" }} />}
+                    label="Pro Pipeline"
+                    size="small"
+                    sx={{
+                      backgroundColor: "rgba(59, 130, 246, 0.25)",
+                      color: "#93c5fd",
+                      fontWeight: 700,
+                      fontSize: "0.75rem",
+                      display: { xs: "none", sm: "inline-flex" },
+                    }}
+                  />
+                </Stack>
+                <Typography
+                  variant="body1"
+                  sx={{
+                    color: "#cbd5e1 !important",
+                    fontSize: { xs: "0.875rem", sm: "0.975rem" },
+                    maxWidth: 650,
+                  }}
+                >
+                  Extract real-time postings directly from LinkedIn or set up automated scheduled alerts delivered straight to your email.
+                </Typography>
+              </Box>
+            </Stack>
+          </Grid>
 
             <Grid item xs={12} md={4} sx={{ textAlign: { xs: "left", md: "right" } }}>
               <Stack
@@ -1063,37 +1063,75 @@ function JobSearch() {
           </Box>
         )}
 
-        {/* Empty State */}
+        {/* Suggested Templates When No Active Search Run (Covers empty space) */}
         {jobs.length === 0 && !loading && activeTab === 0 && (
-          <Paper
-            elevation={0}
-            sx={{
-              p: { xs: 4, sm: 6 },
-              textAlign: "center",
-              borderRadius: 3.5,
-              border: "2px dashed #cbd5e1",
-              backgroundColor: "#ffffff",
-            }}
-          >
-            <Avatar
-              sx={{
-                width: 72,
-                height: 72,
-                margin: "0 auto",
-                mb: 2,
-                bgcolor: "#eff6ff",
-                color: "#2563eb",
-              }}
-            >
-              <SearchIcon sx={{ fontSize: 36 }} />
-            </Avatar>
-            <Typography variant="h6" sx={{ fontWeight: 700, color: "#0f172a", mb: 0.5 }}>
-              Ready to Crawl LinkedIn Postings
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 440, mx: "auto", mb: 2 }}>
-              Specify role keywords, target region, and delivery email above, then trigger the scraper to fetch opportunities.
-            </Typography>
-          </Paper>
+          <Box>
+            <Box sx={{ mb: 2.5 }}>
+              <Typography variant="h6" fontWeight={700} color="#0f172a">
+                Popular Role Search Presets
+              </Typography>
+              <Typography variant="body2" color="#64748b">
+                Click any suggestion to pre-fill keywords, target region, and max job limit
+              </Typography>
+            </Box>
+
+            <Grid container spacing={2.5} mb={4}>
+              {[
+                { title: "Senior React Developer", kw: "React Developer", loc: "Remote", limit: 20 },
+                { title: "Cloud & DevOps Architect", kw: "DevOps Kubernetes", loc: "United States", limit: 15 },
+                { title: "Python Backend Lead", kw: "Python Django FastAPI", loc: "Remote", limit: 20 },
+                { title: "Fullstack AI Engineer", kw: "Fullstack LLM AI", loc: "San Francisco, CA", limit: 15 },
+                { title: "Data Analyst & Scientist", kw: "Data Science Python", loc: "New York, NY", limit: 15 },
+                { title: "Product Designer (UI/UX)", kw: "Product Designer Figma", loc: "Remote", limit: 10 },
+              ].map((template, idx) => (
+                <Grid item xs={12} sm={6} md={4} key={idx}>
+                  <Card
+                    elevation={0}
+                    sx={{
+                      p: 2.5,
+                      borderRadius: 3,
+                      border: "1px solid #e2e8f0",
+                      backgroundColor: "#ffffff",
+                      cursor: "pointer",
+                      transition: "all 0.2s ease",
+                      "&:hover": {
+                        transform: "translateY(-3px)",
+                        borderColor: "#2563eb",
+                        boxShadow: "0 8px 20px rgba(37, 99, 235, 0.08)",
+                      },
+                    }}
+                    onClick={() => {
+                      setKeywords(template.kw);
+                      setLocation(template.loc);
+                      setJobLimit(template.limit);
+                    }}
+                  >
+                    <Stack direction="row" spacing={1.5} alignItems="center" mb={1.5}>
+                      <Avatar sx={{ width: 34, height: 34, bgcolor: "#eff6ff", color: "#2563eb" }}>
+                        <SparklesIcon fontSize="small" />
+                      </Avatar>
+                      <Typography variant="subtitle2" fontWeight={700} color="#0f172a">
+                        {template.title}
+                      </Typography>
+                    </Stack>
+                    <Typography variant="caption" color="#475569" display="block">
+                      <strong>Keywords:</strong> {template.kw}
+                    </Typography>
+                    <Typography variant="caption" color="#64748b" display="block" sx={{ mb: 1.5 }}>
+                      <strong>Region:</strong> {template.loc} • <strong>Limit:</strong> {template.limit}
+                    </Typography>
+                    <Button
+                      size="small"
+                      variant="text"
+                      sx={{ p: 0, fontSize: "0.8rem", fontWeight: 600, color: "#2563eb" }}
+                    >
+                      Fill Parameters &rarr;
+                    </Button>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          </Box>
         )}
 
         {/* Dialog: Search Confirmation */}
@@ -1239,7 +1277,6 @@ function JobSearch() {
             </Button>
           </DialogActions>
         </Dialog>
-      </Container>
     </Box>
   );
 }

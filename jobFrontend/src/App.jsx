@@ -194,10 +194,9 @@ function App() {
         <Box
           sx={{
             flexGrow: 1,
-            p: { xs: 2, sm: 3, md: 3.5 },
+            p: { xs: 2, sm: 2.5, md: 3 },
             width: '100%',
-            maxWidth: '1600px',
-            mx: 'auto',
+            minHeight: 'calc(100vh - 68px)',
           }}
         >
           <Outlet />
