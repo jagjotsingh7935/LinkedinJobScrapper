@@ -52,7 +52,7 @@ import {
   InfoOutlined as InfoIcon,
   AutoAwesome as SparklesIcon,
 } from "@mui/icons-material";
-import { searchJobs, saveJob, createJobSchedule, getJobSchedules } from "./api";
+import { searchJobs, saveJob, createJobSchedule, getJobSchedules, parseSkills } from "./api";
 import ScheduleTable from "./ScheduleTable";
 
 function JobSearch() {
@@ -392,52 +392,56 @@ function JobSearch() {
               </Box>
 
               {/* Skills Chips */}
-              {job.skills && job.skills.length > 0 && (
-                <Box>
-                  <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", gap: 0.75 }}>
-                    {job.skills.slice(0, 3).map((skill, index) => (
-                      <Chip
-                        key={index}
-                        label={skill}
-                        size="small"
-                        sx={{
-                          backgroundColor: "#eff6ff",
-                          color: "#1d4ed8",
-                          fontWeight: 600,
-                          fontSize: "0.75rem",
-                          height: 26,
-                          borderRadius: "14px",
-                          border: "1px solid #dbeafe",
-                        }}
-                      />
-                    ))}
-                    {job.skills.length > 3 && (
-                      <Chip
-                        label={`+${job.skills.length - 3} more`}
-                        size="small"
-                        clickable
-                        onClick={() => {
-                          setSelectedSkills(job.skills);
-                          setSelectedJobTitle(job.job_title);
-                          setOpenSkillsDialog(true);
-                        }}
-                        sx={{
-                          backgroundColor: "#f1f5f9",
-                          color: "#475569",
-                          fontWeight: 600,
-                          fontSize: "0.75rem",
-                          height: 26,
-                          borderRadius: "14px",
-                          border: "1px solid #e2e8f0",
-                          "&:hover": {
-                            backgroundColor: "#e2e8f0",
-                          },
-                        }}
-                      />
-                    )}
-                  </Stack>
-                </Box>
-              )}
+              {(() => {
+                const parsedSkills = parseSkills(job.skills);
+                if (!parsedSkills || parsedSkills.length === 0) return null;
+                return (
+                  <Box>
+                    <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", gap: 0.75 }}>
+                      {parsedSkills.slice(0, 3).map((skill, index) => (
+                        <Chip
+                          key={index}
+                          label={skill}
+                          size="small"
+                          sx={{
+                            backgroundColor: "#eff6ff",
+                            color: "#1d4ed8",
+                            fontWeight: 600,
+                            fontSize: "0.75rem",
+                            height: 26,
+                            borderRadius: "14px",
+                            border: "1px solid #dbeafe",
+                          }}
+                        />
+                      ))}
+                      {parsedSkills.length > 3 && (
+                        <Chip
+                          label={`+${parsedSkills.length - 3} more`}
+                          size="small"
+                          clickable
+                          onClick={() => {
+                            setSelectedSkills(parsedSkills);
+                            setSelectedJobTitle(job.job_title);
+                            setOpenSkillsDialog(true);
+                          }}
+                          sx={{
+                            backgroundColor: "#f1f5f9",
+                            color: "#475569",
+                            fontWeight: 600,
+                            fontSize: "0.75rem",
+                            height: 26,
+                            borderRadius: "14px",
+                            border: "1px solid #e2e8f0",
+                            "&:hover": {
+                              backgroundColor: "#e2e8f0",
+                            },
+                          }}
+                        />
+                      )}
+                    </Stack>
+                  </Box>
+                );
+              })()}
             </Stack>
           </CardContent>
 
@@ -1280,7 +1284,7 @@ function JobSearch() {
           </DialogTitle>
           <DialogContent dividers sx={{ borderColor: "#f1f5f9", py: 3 }}>
             <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-              {selectedSkills.map((skill, index) => (
+              {parseSkills(selectedSkills).map((skill, index) => (
                 <Chip
                   key={index}
                   label={skill}

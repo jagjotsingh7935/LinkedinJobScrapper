@@ -734,7 +734,7 @@ class SavedJobSearchView(APIView):
                 'job_function': job.job_function,
                 'industry': job.industry,
                 'salary': job.salary,
-                'skills': json.loads(job.skills) if job.skills else [],
+                'skills': job.get_skills(),
                 'search_query': {
                     'keywords': job.search_query.keywords,
                     'location': job.search_query.location,
@@ -807,7 +807,7 @@ class AllJobList(APIView):
                 'job_function':jobs.job_function,
                 'industry':jobs.industry,
                 'salary':jobs.salary,
-                'skills':jobs.skills if jobs.skills else None
+                'skills':jobs.get_skills()
             })
 
         return paginator.get_paginated_response(job_data)

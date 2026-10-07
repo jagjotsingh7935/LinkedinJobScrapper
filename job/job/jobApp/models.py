@@ -53,7 +53,15 @@ class Job(models.Model):
         return f"{self.job_title} at {self.company} ({self.location})"
 
     def get_skills(self):
-        return json.loads(self.skills) if self.skills else []
+        if not self.skills:
+            return []
+        if isinstance(self.skills, list):
+            return self.skills
+        try:
+            res = json.loads(self.skills)
+            return res if isinstance(res, list) else [str(res)]
+        except Exception:
+            return [s.strip() for s in str(self.skills).split(',') if s.strip()]
 
     def set_skills(self, skills_list):
         self.skills = json.dumps(skills_list)

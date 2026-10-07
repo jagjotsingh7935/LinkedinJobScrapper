@@ -215,3 +215,32 @@ export const deleteJobSchedule = async (id, email) => {
   });
   return response.data;
 };
+
+export const parseSkills = (skills) => {
+  if (!skills) return [];
+  if (Array.isArray(skills)) {
+    return skills.map((s) => (typeof s === "string" ? s.trim() : String(s))).filter(Boolean);
+  }
+  if (typeof skills === "string") {
+    const trimmed = skills.trim();
+    if (!trimmed || trimmed === "null" || trimmed === "undefined" || trimmed === "[]") {
+      return [];
+    }
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) {
+        return parsed.map((s) => (typeof s === "string" ? s.trim() : String(s))).filter(Boolean);
+      }
+      if (typeof parsed === "string") {
+        return parsed.split(",").map((s) => s.trim()).filter(Boolean);
+      }
+    } catch {
+      return trimmed
+        .replace(/^\[|\]$/g, "")
+        .split(/[,;]/)
+        .map((s) => s.replace(/["']/g, "").trim())
+        .filter(Boolean);
+    }
+  }
+  return [];
+};

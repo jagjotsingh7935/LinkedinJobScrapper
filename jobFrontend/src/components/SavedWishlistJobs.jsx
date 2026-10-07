@@ -42,7 +42,7 @@ import {
   Tune as TuneIcon,
   ArrowForward as ArrowForwardIcon,
 } from "@mui/icons-material";
-import { searchSavedWishlistJobs } from "./api";
+import { searchSavedWishlistJobs, parseSkills } from "./api";
 import debounce from "lodash/debounce";
 
 function SavedJobs() {
@@ -242,47 +242,51 @@ function SavedJobs() {
             )}
           </Box>
 
-          {job.skills && job.skills.length > 0 && (
-            <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap", gap: 0.75 }}>
-              {job.skills.slice(0, 3).map((skill, index) => (
-                <Chip
-                  key={index}
-                  label={skill}
-                  size="small"
-                  sx={{
-                    backgroundColor: "#eff6ff",
-                    color: "#1d4ed8",
-                    fontWeight: 600,
-                    fontSize: "0.75rem",
-                    height: 26,
-                    borderRadius: "14px",
-                    border: "1px solid #dbeafe",
-                  }}
-                />
-              ))}
-              {job.skills.length > 3 && (
-                <Chip
-                  label={`+${job.skills.length - 3} more`}
-                  size="small"
-                  clickable
-                  onClick={() => {
-                    setSelectedSkills(job.skills);
-                    setOpenDialog(true);
-                  }}
-                  sx={{
-                    backgroundColor: "#f1f5f9",
-                    color: "#475569",
-                    fontWeight: 600,
-                    fontSize: "0.75rem",
-                    height: 26,
-                    borderRadius: "14px",
-                    border: "1px solid #e2e8f0",
-                    "&:hover": { backgroundColor: "#e2e8f0" },
-                  }}
-                />
-              )}
-            </Stack>
-          )}
+          {(() => {
+            const parsedSkills = parseSkills(job.skills);
+            if (!parsedSkills || parsedSkills.length === 0) return null;
+            return (
+              <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap", gap: 0.75 }}>
+                {parsedSkills.slice(0, 3).map((skill, index) => (
+                  <Chip
+                    key={index}
+                    label={skill}
+                    size="small"
+                    sx={{
+                      backgroundColor: "#eff6ff",
+                      color: "#1d4ed8",
+                      fontWeight: 600,
+                      fontSize: "0.75rem",
+                      height: 26,
+                      borderRadius: "14px",
+                      border: "1px solid #dbeafe",
+                    }}
+                  />
+                ))}
+                {parsedSkills.length > 3 && (
+                  <Chip
+                    label={`+${parsedSkills.length - 3} more`}
+                    size="small"
+                    clickable
+                    onClick={() => {
+                      setSelectedSkills(parsedSkills);
+                      setOpenDialog(true);
+                    }}
+                    sx={{
+                      backgroundColor: "#f1f5f9",
+                      color: "#475569",
+                      fontWeight: 600,
+                      fontSize: "0.75rem",
+                      height: 26,
+                      borderRadius: "14px",
+                      border: "1px solid #e2e8f0",
+                      "&:hover": { backgroundColor: "#e2e8f0" },
+                    }}
+                  />
+                )}
+              </Stack>
+            );
+          })()}
         </Stack>
       </CardContent>
 
@@ -597,7 +601,7 @@ function SavedJobs() {
         </DialogTitle>
         <DialogContent dividers sx={{ borderColor: "#f1f5f9", py: 2.5 }}>
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-            {selectedSkills.map((skill, index) => (
+            {parseSkills(selectedSkills).map((skill, index) => (
               <Chip
                 key={index}
                 label={skill}

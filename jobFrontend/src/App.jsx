@@ -20,8 +20,6 @@ import {
   Menu as MenuIcon,
   Search as SearchIcon,
   NotificationsNone as NotificationsIcon,
-  GitHub as GitHubIcon,
-  CloudDone as CloudDoneIcon,
   NavigateNext as NavigateNextIcon,
   Refresh as RefreshIcon,
 } from '@mui/icons-material';
@@ -123,26 +121,6 @@ function App() {
 
             {/* Right Action Bar */}
             <Stack direction="row" spacing={1.5} alignItems="center">
-              {/* Cloud Status Indicator */}
-              <Chip
-                icon={<CloudDoneIcon sx={{ fontSize: '15px !important', color: '#10b981 !important' }} />}
-                label={
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                    <span className="pulse-dot" />
-                    <span>Render Online</span>
-                  </Box>
-                }
-                size="small"
-                sx={{
-                  backgroundColor: '#ecfdf5',
-                  color: '#065f46',
-                  border: '1px solid #a7f3d0',
-                  fontWeight: 600,
-                  fontSize: '0.75rem',
-                  display: { xs: 'none', sm: 'inline-flex' },
-                }}
-              />
-
               {location.pathname !== '/job-search' && (
                 <Button
                   variant="contained"
@@ -159,19 +137,6 @@ function App() {
                   Quick Search
                 </Button>
               )}
-
-              <Tooltip title="View on GitHub">
-                <IconButton
-                  component="a"
-                  href="https://github.com/jagjotsingh7935/LinkedinJobScrapper"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  size="small"
-                  sx={{ color: '#475569', '&:hover': { color: '#0f172a', backgroundColor: '#f1f5f9' } }}
-                >
-                  <GitHubIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
 
               <Avatar
                 sx={{
