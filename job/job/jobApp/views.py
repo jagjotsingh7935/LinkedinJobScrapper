@@ -457,60 +457,63 @@ class JobSearchView(APIView):
         page = 0
         filtered_out_location = 0
         seen_job_ids = set()  # Track processed job IDs
-        
-        while len(jobs_data) < job_limit:
-            job_ids = get_job_ids(base_url.replace('start={}', f'start={page * 25}'), headers, job_limit - len(jobs_data))  # Adjusted to handle pagination directly
-            if not job_ids:
-                print("No more job IDs available")
-                break
-                
-            for job_id in job_ids:
-                if len(jobs_data) >= job_limit:
+        start_scrape_time = time.time()
+        max_duration_seconds = 24  # Stay well within server/proxy timeouts
+
+        try:
+            while len(jobs_data) < job_limit and (time.time() - start_scrape_time) < max_duration_seconds:
+                job_ids = get_job_ids(base_url.replace('start={}', f'start={page * 25}'), headers, job_limit - len(jobs_data))
+                if not job_ids:
+                    print("No more job IDs available")
                     break
-
-                # Skip if already processed this job ID
-                if job_id in seen_job_ids:
-                    continue
-                seen_job_ids.add(job_id)
-                
-                print(f"\rProcessing job {processed_count+1}", end="")
-                job_data = get_job_details(job_id, headers)
-                processed_count += 1
-                
-                if job_data and job_data.get('job_title') and job_data.get('location'):
-                    # Split keywords into words for flexible matching
                     
-                    # Check if location matches (using flexible matching with pycountry)
-                    location_matches = is_location_match(job_data['location'], location)
-                    
-                    if location_matches:
-                        job = Job.objects.create(
-                            search_query=search_query,
-                            job_id=job_id,
-                            company=job_data['company'],
-                            company_url=job_data['company_url'],
-                            job_title=job_data['job_title'],
-                            job_url=job_data['job_url'],
-                            location=job_data['location'],
-                            posted_date=job_data['posted_date'],
-                            job_description=job_data['job_description'],
-                            applicant_count=job_data['applicant_count'],
-                            level=job_data['level'],
-                            employment_type=job_data['employment_type'],
-                            job_function=job_data['job_function'],
-                            industry=job_data.get('industry'),
-                            salary=job_data['salary'],
-                            skills=json.dumps(job_data['skills'])
-                        )
-                        jobs_data.append({
-                            'id': job.id,
-                            'job_id': job_id,
-                            **job_data
-                        })
-                    else:
-                        filtered_out_location += 1
+                for job_id in job_ids:
+                    if len(jobs_data) >= job_limit or (time.time() - start_scrape_time) >= max_duration_seconds:
+                        break
 
-            page += 1  # Increment page for next batch
+                    # Skip if already processed this job ID
+                    if job_id in seen_job_ids:
+                        continue
+                    seen_job_ids.add(job_id)
+                    
+                    print(f"\rProcessing job {processed_count+1}", end="")
+                    job_data = get_job_details(job_id, headers)
+                    processed_count += 1
+                    
+                    if job_data and job_data.get('job_title') and job_data.get('location'):
+                        # Check if location matches (using flexible matching with pycountry)
+                        location_matches = is_location_match(job_data['location'], location)
+                        
+                        if location_matches:
+                            job = Job.objects.create(
+                                search_query=search_query,
+                                job_id=job_id,
+                                company=job_data['company'],
+                                company_url=job_data['company_url'],
+                                job_title=job_data['job_title'],
+                                job_url=job_data['job_url'],
+                                location=job_data['location'],
+                                posted_date=job_data['posted_date'],
+                                job_description=job_data['job_description'],
+                                applicant_count=job_data['applicant_count'],
+                                level=job_data['level'],
+                                employment_type=job_data['employment_type'],
+                                job_function=job_data['job_function'],
+                                industry=job_data.get('industry'),
+                                salary=job_data['salary'],
+                                skills=json.dumps(job_data['skills'])
+                            )
+                            jobs_data.append({
+                                'id': job.id,
+                                'job_id': job_id,
+                                **job_data
+                            })
+                        else:
+                            filtered_out_location += 1
+
+                page += 1  # Increment page for next batch
+        except Exception as loop_err:
+            print(f"Error during job search scraping loop: {loop_err}")
 
         print()  # Newline after progress
         print(f"Filtered out {filtered_out_location} jobs due to location mismatch")
@@ -583,57 +586,63 @@ class JobRestrictSearchView(APIView):
                 "jobs": []
             })
                 
-        for job_id in job_ids:
-            if len(jobs_data) >= job_limit:
-                break
-            print(f"\rProcessing job {processed_count+1}", end="")
-            job_data = get_job_details(job_id, headers)
-            processed_count += 1
-            
-            if job_data and job_data.get('job_title') and job_data.get('location'):
-                # Split keywords into words for strict matching
-                keyword_terms = set(keywords.lower().split())
+        start_scrape_time = time.time()
+        max_duration_seconds = 24
+
+        try:
+            for job_id in job_ids:
+                if len(jobs_data) >= job_limit or (time.time() - start_scrape_time) >= max_duration_seconds:
+                    break
+                print(f"\rProcessing job {processed_count+1}", end="")
+                job_data = get_job_details(job_id, headers)
+                processed_count += 1
                 
-                job_title_lower = job_data['job_title'].lower()
-                
-                # Check if ALL keyword terms are present in the job title (exact word match)
-                title_matches = all(
-                    re.search(rf'\b{re.escape(term)}\b', job_title_lower) 
-                    for term in keyword_terms
-                )
-                
-                # Check if location matches (using flexible matching with pycountry)
-                location_matches = is_location_match(job_data['location'], location)
-                
-                if title_matches and location_matches:
-                    job = Job.objects.create(
-                        search_query=search_query,
-                        job_id=job_id,
-                        company=job_data['company'],
-                        company_url=job_data['company_url'],
-                        job_title=job_data['job_title'],
-                        job_url=job_data['job_url'],
-                        location=job_data['location'],
-                        posted_date=job_data['posted_date'],
-                        job_description=job_data['job_description'],
-                        applicant_count=job_data['applicant_count'],
-                        level=job_data['level'],
-                        employment_type=job_data['employment_type'],
-                        job_function=job_data['job_function'],
-                        industry=job_data.get('industry'),
-                        salary=job_data['salary'],
-                        skills=json.dumps(job_data['skills'])
+                if job_data and job_data.get('job_title') and job_data.get('location'):
+                    # Split keywords into words for strict matching
+                    keyword_terms = set(keywords.lower().split())
+                    
+                    job_title_lower = job_data['job_title'].lower()
+                    
+                    # Check if ALL keyword terms are present in the job title (exact word match)
+                    title_matches = all(
+                        re.search(rf'\b{re.escape(term)}\b', job_title_lower) 
+                        for term in keyword_terms
                     )
-                    jobs_data.append({
-                        'id': job.id,
-                        'job_id': job_id,
-                        **job_data
-                    })
-                else:
-                    if not title_matches:
-                        filtered_out_title += 1
-                    if not location_matches:
-                        filtered_out_location += 1
+                    
+                    # Check if location matches (using flexible matching with pycountry)
+                    location_matches = is_location_match(job_data['location'], location)
+                    
+                    if title_matches and location_matches:
+                        job = Job.objects.create(
+                            search_query=search_query,
+                            job_id=job_id,
+                            company=job_data['company'],
+                            company_url=job_data['company_url'],
+                            job_title=job_data['job_title'],
+                            job_url=job_data['job_url'],
+                            location=job_data['location'],
+                            posted_date=job_data['posted_date'],
+                            job_description=job_data['job_description'],
+                            applicant_count=job_data['applicant_count'],
+                            level=job_data['level'],
+                            employment_type=job_data['employment_type'],
+                            job_function=job_data['job_function'],
+                            industry=job_data.get('industry'),
+                            salary=job_data['salary'],
+                            skills=json.dumps(job_data['skills'])
+                        )
+                        jobs_data.append({
+                            'id': job.id,
+                            'job_id': job_id,
+                            **job_data
+                        })
+                    else:
+                        if not title_matches:
+                            filtered_out_title += 1
+                        if not location_matches:
+                            filtered_out_location += 1
+        except Exception as loop_err:
+            print(f"Error during restricted job search scraping: {loop_err}")
 
         print()  # Newline after progress
         print(f"Filtered out {filtered_out_title} jobs due to title mismatch")
@@ -1486,22 +1495,26 @@ class SaveJobScheduler(APIView):
 
         # Create one JobScheduler per day × time combination
         created = []
-        for day in days_input:
-            for time_obj in time_objs:
-                scheduler = JobScheduler.objects.create(
-                    email=email,
-                    keywords=keywords,
-                    location=location,
-                    job_limit=job_limit,
-                    day=day,
-                    time=time_obj
-                )
-                created.append(scheduler.id)
+        try:
+            for day in days_input:
+                for time_obj in time_objs:
+                    scheduler = JobScheduler.objects.create(
+                        email=email,
+                        keywords=keywords,
+                        location=location,
+                        job_limit=job_limit,
+                        day=day,
+                        time=time_obj
+                    )
+                    created.append(scheduler.id)
 
-        return Response({
-            "message": f"Created {len(created)} schedule(s) successfully",
-            "created_ids": created
-        }, status=201)
+            return Response({
+                "message": f"Created {len(created)} schedule(s) successfully",
+                "created_ids": created
+            }, status=201)
+        except Exception as e:
+            print(f"Error creating scheduler: {e}")
+            return Response({"error": f"Failed to save scheduler: {str(e)}"}, status=500)
 
 class ShowJobScheduler(APIView):
     def get(self, request):

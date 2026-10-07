@@ -6,7 +6,7 @@ services:
     plan: free
     rootDir: job/job
     buildCommand: ./build.sh
-    startCommand: gunicorn job.wsgi:application
+    startCommand: gunicorn job.wsgi:application --timeout 120 --workers 2
     envVars:
       - key: PYTHON_VERSION
         value: 3.12.8
