@@ -2,6 +2,8 @@ import os
 import random
 import time
 import uuid
+import threading
+from django.core.mail import EmailMessage
 from django.conf import settings
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -365,57 +367,97 @@ def get_job_details(job_id, headers):
 
 
 
+def send_job_results_email(jobs_data, email, keywords, location):
+    """Generate Excel with native hyperlinks and send to email in a background thread."""
+    if not jobs_data or not email:
+        return
+
+    def _worker():
+        try:
+            # Flatten skills for Excel
+            formatted_jobs = []
+            for job in jobs_data:
+                job_copy = dict(job)
+                if 'skills' in job_copy and isinstance(job_copy['skills'], list):
+                    job_copy['skills'] = ', '.join(job_copy['skills'])
+                formatted_jobs.append(job_copy)
+
+            columns = [
+                'company', 'job_title', 'posted_date', 'applicant_count', 'salary',
+                'level', 'location', 'company_url', 'skills', 'job_url',
+                'job_description', 'employment_type', 'job_function'
+            ]
+
+            df = pd.DataFrame(formatted_jobs)
+            df = df[[col for col in columns if col in df.columns]]
+
+            filename = f"jobs_data_{uuid.uuid4().hex}.xlsx"
+            filepath = os.path.join(settings.MEDIA_ROOT, filename)
+            os.makedirs(settings.MEDIA_ROOT, exist_ok=True)
+
+            from openpyxl import Workbook
+            from openpyxl.styles import Font
+
+            wb = Workbook()
+            ws = wb.active
+            ws.title = "Job Search Results"
+
+            for col_num, header in enumerate(df.columns, start=1):
+                cell = ws.cell(row=1, column=col_num, value=header)
+                cell.font = Font(bold=True)
+
+            for row_num, row in enumerate(df.itertuples(index=False), start=2):
+                for col_num, value in enumerate(row, start=1):
+                    col_name = df.columns[col_num - 1]
+                    cell = ws.cell(row=row_num, column=col_num)
+
+                    if col_name == 'company_url' and value and value != 'N/A':
+                        cell.hyperlink = str(value).strip()
+                        cell.value = "Company Site"
+                        cell.style = "Hyperlink"
+                    elif col_name == 'job_url' and value and value != 'N/A':
+                        cell.hyperlink = str(value).strip()
+                        cell.value = "View Job"
+                        cell.style = "Hyperlink"
+                    else:
+                        cell.value = value
+
+            wb.save(filepath)
+
+            # Send email
+            from_email = getattr(settings, 'EMAIL_HOST_USER', None) or 'swapsolutions3@gmail.com'
+            email_subject = f"LinkedIn Job Search Results: {keywords} in {location}"
+            email_body = (
+                f"Hello,\n\n"
+                f"Please find attached your LinkedIn job search report for '{keywords}' in '{location}'.\n"
+                f"Total matching jobs found: {len(jobs_data)}.\n\n"
+                f"Best regards,\n"
+                f"LinkedIn Scraper Pro"
+            )
+
+            email_message = EmailMessage(
+                subject=email_subject,
+                body=email_body,
+                from_email=from_email,
+                to=[email]
+            )
+            with open(filepath, 'rb') as f:
+                email_message.attach(filename, f.read(), 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+            email_message.send()
+            print(f"Successfully sent Excel report to {email}")
+        except Exception as e:
+            print(f"Failed to send email with Excel attachment to {email}: {e}")
+
+    thread = threading.Thread(target=_worker, daemon=True)
+    thread.start()
+
+
+
 class JobSearchView(APIView):
     def post(self, request):
         keywords = request.data.get('keywords', '').strip()
         location = request.data.get('location', '').strip()
         email = request.data.get('email', '').strip()
-        job_limit = int(request.data.get('job_limit', 100))
-
-        # Validate inputs
-        if not keywords or not location or not email:
-            return Response(
-                {"error": "Keywords, location, and email are required"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        # Validate email format
-        email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-        if not re.match(email_regex, email):
-            return Response(
-                {"error": "Invalid email format"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        if job_limit < 1 or job_limit > 3000:
-            return Response(
-                {"error": "Job limit must be between 1 and 3000"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        # Create a SearchQuery record
-        search_query = SearchQuery.objects.create(
-            keywords=keywords,
-            location=location,
-            job_limit=job_limit,
-            email=email
-        )
-
-        # Trigger Celery task
-        task = process_job_search.delay(keywords, location, email, job_limit, search_query.id)
-
-        return Response({
-            "message": "Job search task queued. Results will be sent to the provided email.",
-            "task_id": task.id,
-            "search_query_id": search_query.id
-        }, status=status.HTTP_202_ACCEPTED)
-    
-
-
-class JobSearchView(APIView):
-    def post(self, request):
-        keywords = request.data.get('keywords', '').strip()
-        location = request.data.get('location', '').strip()
         job_limit = int(request.data.get('job_limit', 100))
         
         if not keywords or not location:
@@ -448,7 +490,8 @@ class JobSearchView(APIView):
         search_query = SearchQuery.objects.create(
             keywords=keywords,
             location=location,
-            job_limit=job_limit
+            job_limit=job_limit,
+            email=email if email else None
         )
         
         base_url = create_linkedin_url(keywords, location)
@@ -524,8 +567,12 @@ class JobSearchView(APIView):
                 "jobs": []
             })
 
+        # Send Excel spreadsheet to email in background thread
+        if email:
+            send_job_results_email(jobs_data, email, keywords, location)
+
         return Response({
-            "message": f"Found {len(jobs_data)} matching jobs",
+            "message": f"Found {len(jobs_data)} matching jobs" + (f". An Excel report is also being emailed to {email}." if email else ""),
             "jobs": jobs_data
         })
 
@@ -536,6 +583,7 @@ class JobRestrictSearchView(APIView):
 
         keywords = request.data.get('keywords', '').strip()
         location = request.data.get('location', '').strip()
+        email = request.data.get('email', '').strip()
         job_limit = int(request.data.get('job_limit', 100))
         
         if not keywords or not location:
@@ -654,8 +702,12 @@ class JobRestrictSearchView(APIView):
                 "jobs": []
             })
 
+        # Send Excel spreadsheet to email in background thread
+        if email and jobs_data:
+            send_job_results_email(jobs_data, email, keywords, location)
+
         return Response({
-            "message": f"Found {len(jobs_data)} matching jobs",
+            "message": f"Found {len(jobs_data)} matching jobs" + (f". An Excel report is also being emailed to {email}." if email else ""),
             "jobs": jobs_data
         })
 
